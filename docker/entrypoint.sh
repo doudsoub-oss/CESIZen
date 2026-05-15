@@ -58,15 +58,29 @@ ensure_storage_link() {
     fi
 }
 
-if [ "${ROLE}" = "app" ]; then
-    ensure_vendor
-    wait_for_db
-    ensure_app_key
-    run_migrations
-    ensure_storage_link
-elif [ "${ROLE}" = "queue" ]; then
-    ensure_vendor
-    wait_for_db
-fi
+wait_for_vendor() {
+    echo "[entrypoint] Waiting for vendor/autoload.php (initialized by the app service)..."
+    while [ ! -f "${APP_PATH}/vendor/autoload.php" ]; do
+        sleep 2
+    done
+    echo "[entrypoint] vendor ready."
+}
+
+case "${ROLE}" in
+    app)
+        ensure_vendor
+        wait_for_db
+        ensure_app_key
+        run_migrations
+        ensure_storage_link
+        ;;
+    queue)
+        wait_for_vendor
+        wait_for_db
+        ;;
+    node)
+        wait_for_vendor
+        ;;
+esac
 
 exec "$@"

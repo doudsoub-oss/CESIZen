@@ -42,7 +42,7 @@ When `docker compose up` settles, the app is available at:
 
 - **App**: <http://localhost:8080>
 - **Vite HMR**: <http://localhost:5173> (used by the browser, not directly by you)
-- **Postgres**: `localhost:5432` (user/db/password all `cesizen` by default)
+- **Postgres**: `localhost:5433` (user/db/password all `cesizen` by default — host port 5433 to avoid conflict with a host-side Postgres on 5432; override with `DB_PORT_HOST` in `.env`)
 
 Seeded accounts (password `password`):
 
@@ -58,7 +58,7 @@ Seeded accounts (password `password`):
 |---|---|---|
 | `APP_PORT` | `8080` | Host port for Nginx |
 | `VITE_PORT` | `5173` | Host port for the Vite dev server |
-| `DB_PORT_HOST` | `5432` | Host port for Postgres (only needed if you connect from a host-side client) |
+| `DB_PORT_HOST` | `5433` | Host port for Postgres (only needed if you connect from a host-side client). Default is `5433` so it doesn't clash with a host-installed Postgres on `5432`. |
 | `UID` / `GID` | `1000` | Used when building the `app` image so bind-mounted files are owned by your host user. Override with `UID=$(id -u) GID=$(id -g) docker compose build` if your host UID differs. |
 
 ## Command cheat sheet
