@@ -33,20 +33,45 @@ class CESIZenSeeder extends Seeder
             'email' => 'user@cesizen.fr',
         ]);
 
-        // Create categories for content
-        $categories = [
-            ['name' => 'Comprendre le stress', 'slug' => 'comprendre-le-stress', 'description' => 'Articles pour comprendre les mécanismes du stress'],
-            ['name' => 'Techniques de relaxation', 'slug' => 'techniques-relaxation', 'description' => 'Méthodes et exercices pour se relaxer'],
-            ['name' => 'Santé mentale', 'slug' => 'sante-mentale', 'description' => 'Informations sur la santé mentale'],
-            ['name' => 'Ressources', 'slug' => 'ressources', 'description' => 'Liens et ressources utiles'],
-        ];
+        // Create top-level categories
+        $stressCategory = Category::create([
+            'name' => 'Comprendre le stress',
+            'slug' => 'comprendre-le-stress',
+            'description' => 'Articles pour comprendre les mécanismes du stress',
+            'position' => 0,
+        ]);
 
-        foreach ($categories as $categoryData) {
-            Category::create($categoryData);
-        }
+        $relaxationCategory = Category::create([
+            'name' => 'Techniques de relaxation',
+            'slug' => 'techniques-relaxation',
+            'description' => 'Méthodes et exercices pour se relaxer',
+            'position' => 1,
+        ]);
 
-        // Create sample content
-        $stressCategory = Category::where('slug', 'comprendre-le-stress')->first();
+        Category::create([
+            'name' => 'Santé mentale',
+            'slug' => 'sante-mentale',
+            'description' => 'Informations sur la santé mentale',
+            'position' => 2,
+        ]);
+
+        Category::create([
+            'name' => 'Ressources',
+            'slug' => 'ressources',
+            'description' => 'Liens et ressources utiles',
+            'position' => 3,
+        ]);
+
+        // Nested sub-category under "Techniques de relaxation"
+        $breathingCategory = Category::create([
+            'name' => 'Respiration profonde',
+            'slug' => 'respiration-profonde',
+            'description' => 'Exercices de respiration pour réduire le stress',
+            'parent_id' => $relaxationCategory->id,
+            'position' => 0,
+        ]);
+
+        // Sample contents
         Content::create([
             'category_id' => $stressCategory->id,
             'title' => 'Qu\'est-ce que le stress ?',
@@ -54,6 +79,30 @@ class CESIZenSeeder extends Seeder
             'excerpt' => 'Le stress est une réaction naturelle de l\'organisme face à une situation perçue comme menaçante.',
             'body' => "Le stress est une réponse physiologique et psychologique de l'organisme face à des situations perçues comme menaçantes ou exigeantes. Cette réaction, également appelée « réponse de lutte ou de fuite », prépare le corps à faire face à un danger potentiel.\n\n## Les différents types de stress\n\nIl existe deux types principaux de stress :\n\n1. **Le stress aigu** : de courte durée, il survient en réponse à une situation immédiate.\n2. **Le stress chronique** : prolongé dans le temps, il peut avoir des effets néfastes sur la santé.\n\n## Les symptômes du stress\n\nLe stress peut se manifester de différentes manières :\n- Tensions musculaires\n- Troubles du sommeil\n- Irritabilité\n- Difficultés de concentration\n- Fatigue",
             'type' => 'article',
+            'is_published' => true,
+            'published_at' => now(),
+            'created_by' => $admin->id,
+        ]);
+
+        Content::create([
+            'category_id' => $breathingCategory->id,
+            'title' => 'La respiration carrée',
+            'slug' => 'respiration-carree',
+            'excerpt' => 'Une technique de respiration simple pour calmer rapidement le système nerveux.',
+            'body' => "La respiration carrée, aussi appelée « box breathing », est une technique utilisée pour réduire le stress et améliorer la concentration.\n\n## La méthode\n\n1. Inspirez par le nez pendant 4 secondes.\n2. Retenez votre souffle pendant 4 secondes.\n3. Expirez par la bouche pendant 4 secondes.\n4. Retenez votre souffle, poumons vides, pendant 4 secondes.\n\nRépétez le cycle 4 à 8 fois.\n\n## Quand l'utiliser\n\n- Avant une situation stressante (réunion, examen)\n- Pour s'endormir plus facilement\n- Pendant une crise d'anxiété",
+            'type' => 'resource',
+            'is_published' => true,
+            'published_at' => now(),
+            'created_by' => $admin->id,
+        ]);
+
+        Content::create([
+            'category_id' => null,
+            'title' => 'Mentions légales',
+            'slug' => 'mentions-legales',
+            'excerpt' => 'Informations légales et politique de confidentialité.',
+            'body' => "## Éditeur\n\nCESIZen est une application développée dans le cadre d'un projet pédagogique.\n\n## Protection des données personnelles\n\nConformément au Règlement Général sur la Protection des Données (RGPD), vous disposez d'un droit d'accès, de rectification et de suppression de vos données personnelles.\n\n## Cookies\n\nL'application utilise uniquement les cookies strictement nécessaires à son fonctionnement (session, CSRF).",
+            'type' => 'page',
             'is_published' => true,
             'published_at' => now(),
             'created_by' => $admin->id,

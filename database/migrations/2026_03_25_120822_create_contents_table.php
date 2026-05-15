@@ -21,7 +21,7 @@ return new class extends Migration
             $table->enum('type', ['page', 'article', 'resource'])->default('article');
             $table->boolean('is_published')->default(false);
             $table->timestamp('published_at')->nullable();
-            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('created_by')->nullable()->constrained('users')->cascadeOnDelete();
             $table->timestamps();
         });
     }

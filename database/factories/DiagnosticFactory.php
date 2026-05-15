@@ -23,13 +23,6 @@ class DiagnosticFactory extends Factory
         ];
     }
 
-    public function anonymous(): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'user_id' => null,
-        ]);
-    }
-
     public function incomplete(): static
     {
         return $this->state(fn (array $attributes) => [
