@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\Role;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -31,6 +32,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'is_active' => 'boolean',
+            'role' => Role::class,
         ];
     }
 
@@ -54,13 +56,20 @@ class User extends Authenticatable
         return $this->hasMany(AuditLog::class);
     }
 
+    public function hasRole(Role|string $role): bool
+    {
+        $role = is_string($role) ? Role::from($role) : $role;
+
+        return $this->role === $role;
+    }
+
     public function isAdmin(): bool
     {
-        return in_array($this->role, ['admin', 'super_admin']);
+        return $this->role?->isAtLeast(Role::Admin) ?? false;
     }
 
     public function isSuperAdmin(): bool
     {
-        return $this->role === 'super_admin';
+        return $this->role === Role::SuperAdmin;
     }
 }

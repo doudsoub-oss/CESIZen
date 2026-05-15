@@ -7,6 +7,15 @@ INIT_MARKER="${APP_PATH}/storage/.docker-initialized"
 
 cd "${APP_PATH}"
 
+# Source .env so $DB_HOST etc. are available to the shell + PHP probe.
+# Laravel reads .env on its own; this is just for the entrypoint.
+if [ -f "${APP_PATH}/.env" ]; then
+    set -a
+    # shellcheck disable=SC1091
+    . "${APP_PATH}/.env"
+    set +a
+fi
+
 wait_for_db() {
     echo "[entrypoint] Waiting for database ${DB_HOST}:${DB_PORT}..."
     until php -r "
