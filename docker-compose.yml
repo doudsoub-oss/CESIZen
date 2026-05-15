@@ -14,11 +14,6 @@ services:
     working_dir: /var/www/html
     environment:
       CONTAINER_ROLE: app
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_DATABASE: ${DB_DATABASE:-cesizen}
-      DB_USERNAME: ${DB_USERNAME:-cesizen}
-      DB_PASSWORD: ${DB_PASSWORD:-cesizen}
     volumes:
       - .:/var/www/html
       - app-vendor:/var/www/html/vendor
@@ -90,11 +85,6 @@ services:
     command: php artisan queue:work --tries=3 --backoff=5 --sleep=3
     environment:
       CONTAINER_ROLE: queue
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_DATABASE: ${DB_DATABASE:-cesizen}
-      DB_USERNAME: ${DB_USERNAME:-cesizen}
-      DB_PASSWORD: ${DB_PASSWORD:-cesizen}
     volumes:
       - .:/var/www/html
       - app-vendor:/var/www/html/vendor
