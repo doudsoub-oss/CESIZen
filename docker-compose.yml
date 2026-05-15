@@ -1,0 +1,116 @@
+name: cesizen
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
+    image: cesizen/app:dev
+    container_name: cesizen-app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    environment:
+      CONTAINER_ROLE: app
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE:-cesizen}
+      DB_USERNAME: ${DB_USERNAME:-cesizen}
+      DB_PASSWORD: ${DB_PASSWORD:-cesizen}
+    volumes:
+      - .:/var/www/html
+      - app-vendor:/var/www/html/vendor
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - cesizen
+
+  web:
+    image: nginx:1.27-alpine
+    container_name: cesizen-web
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:80"
+    volumes:
+      - .:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - cesizen
+
+  db:
+    image: postgres:16-alpine
+    container_name: cesizen-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-cesizen}
+      POSTGRES_USER: ${DB_USERNAME:-cesizen}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-cesizen}
+    ports:
+      - "${DB_PORT_HOST:-5432}:5432"
+    volumes:
+      - cesizen-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-cesizen} -d ${DB_DATABASE:-cesizen}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - cesizen
+
+  node:
+    image: cesizen/app:dev
+    container_name: cesizen-node
+    restart: unless-stopped
+    working_dir: /var/www/html
+    environment:
+      CONTAINER_ROLE: node
+    command: sh -c "npm install --no-audit --no-fund && npm run dev -- --host 0.0.0.0"
+    ports:
+      - "${VITE_PORT:-5173}:5173"
+    volumes:
+      - .:/var/www/html
+      - node-modules:/var/www/html/node_modules
+      - app-vendor:/var/www/html/vendor
+    depends_on:
+      app:
+        condition: service_started
+    networks:
+      - cesizen
+
+  queue:
+    image: cesizen/app:dev
+    container_name: cesizen-queue
+    restart: unless-stopped
+    working_dir: /var/www/html
+    command: php artisan queue:work --tries=3 --backoff=5 --sleep=3
+    environment:
+      CONTAINER_ROLE: queue
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE:-cesizen}
+      DB_USERNAME: ${DB_USERNAME:-cesizen}
+      DB_PASSWORD: ${DB_PASSWORD:-cesizen}
+    volumes:
+      - .:/var/www/html
+      - app-vendor:/var/www/html/vendor
+    depends_on:
+      app:
+        condition: service_started
+      db:
+        condition: service_healthy
+    networks:
+      - cesizen
+
+volumes:
+  cesizen-pgdata:
+  app-vendor:
+  node-modules:
+
+networks:
+  cesizen:
+    driver: bridge
