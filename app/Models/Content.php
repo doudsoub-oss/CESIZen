@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ContentType;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -18,6 +19,7 @@ class Content extends Model
         return [
             'is_published' => 'boolean',
             'published_at' => 'datetime',
+            'type' => ContentType::class,
         ];
     }
 
@@ -38,6 +40,9 @@ class Content extends Model
 
     public function scopePublished($query)
     {
-        return $query->where('is_published', true);
+        return $query->where('is_published', true)
+            ->where(function ($q) {
+                $q->whereNull('published_at')->orWhere('published_at', '<=', now());
+            });
     }
 }
