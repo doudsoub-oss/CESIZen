@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('diagnostics', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('questionnaire_id')->constrained()->cascadeOnDelete();
             $table->integer('score_total')->default(0);
             $table->foreignId('result_interpretation_id')->nullable()->constrained()->nullOnDelete();

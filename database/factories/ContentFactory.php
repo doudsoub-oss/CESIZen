@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\ContentType;
 use App\Models\Category;
 use App\Models\Content;
 use App\Models\User;
@@ -23,7 +24,7 @@ class ContentFactory extends Factory
             'slug' => Str::slug($title),
             'excerpt' => fake()->paragraph(),
             'body' => fake()->paragraphs(5, true),
-            'type' => fake()->randomElement(['page', 'article', 'resource']),
+            'type' => fake()->randomElement(ContentType::cases()),
             'is_published' => true,
             'published_at' => now(),
             'created_by' => User::factory(),
@@ -41,14 +42,15 @@ class ContentFactory extends Factory
     public function article(): static
     {
         return $this->state(fn (array $attributes) => [
-            'type' => 'article',
+            'type' => ContentType::Article,
         ]);
     }
 
     public function page(): static
     {
         return $this->state(fn (array $attributes) => [
-            'type' => 'page',
+            'type' => ContentType::Page,
+            'category_id' => null,
         ]);
     }
 }
