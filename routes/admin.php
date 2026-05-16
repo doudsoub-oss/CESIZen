@@ -1,9 +1,13 @@
 <?php
 
+use App\Http\Controllers\Admin\AnswerOptionController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ContentController;
 use App\Http\Controllers\Admin\MenuController;
 use App\Http\Controllers\Admin\MenuItemController;
+use App\Http\Controllers\Admin\QuestionController;
+use App\Http\Controllers\Admin\QuestionnaireController;
+use App\Http\Controllers\Admin\ResultInterpretationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -34,6 +38,27 @@ Route::middleware(['auth', 'verified', 'active', 'role:admin'])
         Route::scopeBindings()->group(function (): void {
             Route::resource('menus.items', MenuItemController::class)
                 ->parameters(['items' => 'item'])
+                ->only(['create', 'store', 'edit', 'update', 'destroy']);
+        });
+
+        /*
+        |----------------------------------------------------------------
+        | Diagnostic module admin (§5.3 + §5.4)
+        |----------------------------------------------------------------
+        */
+        Route::resource('questionnaires', QuestionnaireController::class)->except('show');
+
+        Route::scopeBindings()->group(function (): void {
+            Route::resource('questionnaires.questions', QuestionController::class)
+                ->parameters(['questions' => 'question'])
+                ->only(['create', 'store', 'edit', 'update', 'destroy']);
+
+            Route::resource('questionnaires.questions.answer-options', AnswerOptionController::class)
+                ->parameters(['questions' => 'question', 'answer-options' => 'answerOption'])
+                ->only(['create', 'store', 'edit', 'update', 'destroy']);
+
+            Route::resource('questionnaires.interpretations', ResultInterpretationController::class)
+                ->parameters(['interpretations' => 'interpretation'])
                 ->only(['create', 'store', 'edit', 'update', 'destroy']);
         });
     });
