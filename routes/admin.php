@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\MenuItemController;
 use App\Http\Controllers\Admin\QuestionController;
 use App\Http\Controllers\Admin\QuestionnaireController;
 use App\Http\Controllers\Admin\ResultInterpretationController;
+use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -61,4 +62,16 @@ Route::middleware(['auth', 'verified', 'active', 'role:admin'])
                 ->parameters(['interpretations' => 'interpretation'])
                 ->only(['create', 'store', 'edit', 'update', 'destroy']);
         });
+
+        /*
+        |----------------------------------------------------------------
+        | Account management (§5.1 + §5.4)
+        |----------------------------------------------------------------
+        */
+        Route::resource('users', UserController::class)
+            ->only(['index', 'create', 'store', 'show', 'destroy']);
+        Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])
+            ->name('users.toggle-active');
+        Route::patch('users/{user}/role', [UserController::class, 'changeRole'])
+            ->name('users.change-role');
     });
