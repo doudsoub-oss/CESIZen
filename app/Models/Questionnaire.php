@@ -30,7 +30,7 @@ class Questionnaire extends Model
         return $this->hasMany(Question::class)->orderBy('position');
     }
 
-    public function resultInterpretations(): HasMany
+    public function interpretations(): HasMany
     {
         return $this->hasMany(ResultInterpretation::class)->orderBy('min_score');
     }
@@ -47,7 +47,7 @@ class Questionnaire extends Model
 
     public function getInterpretationForScore(int $score): ?ResultInterpretation
     {
-        return $this->resultInterpretations()
+        return $this->interpretations()
             ->where('min_score', '<=', $score)
             ->where('max_score', '>=', $score)
             ->first();
