@@ -52,3 +52,100 @@ export type ContentDetail = ContentSummary & {
     created_at: string;
     updated_at: string;
 };
+
+/* -------------------------------------------------------------------------
+ * Diagnostic module
+ * ---------------------------------------------------------------------- */
+
+export type AnswerOption = {
+    id: number;
+    question_id: number;
+    label: string;
+    score: number;
+    position: number;
+};
+
+export type Question = {
+    id: number;
+    questionnaire_id: number;
+    text: string;
+    position: number;
+    is_required: boolean;
+    answer_options?: AnswerOption[];
+    answerOptions?: AnswerOption[];
+};
+
+export type ResultInterpretation = {
+    id: number;
+    questionnaire_id: number;
+    min_score: number;
+    max_score: number;
+    title: string;
+    description: string;
+    recommendations: string | null;
+    color: string | null;
+};
+
+export type Questionnaire = {
+    id: number;
+    title: string;
+    slug: string;
+    description: string | null;
+    instructions: string | null;
+    is_active: boolean;
+    created_by: number | null;
+    questions?: Question[];
+    interpretations?: ResultInterpretation[];
+    questions_count?: number;
+    interpretations_count?: number;
+    diagnostics_count?: number;
+};
+
+export type DiagnosticResponse = {
+    id: number;
+    diagnostic_id: number;
+    question_id: number;
+    answer_option_id: number;
+    score: number;
+    question?: Pick<Question, 'id' | 'text'>;
+    answer_option?: Pick<AnswerOption, 'id' | 'label' | 'score'>;
+    answerOption?: Pick<AnswerOption, 'id' | 'label' | 'score'>;
+};
+
+export type Diagnostic = {
+    id: number;
+    user_id: number;
+    questionnaire_id: number;
+    score_total: number;
+    result_interpretation_id: number | null;
+    completed_at: string | null;
+    created_at: string;
+    updated_at: string;
+    questionnaire?: Pick<Questionnaire, 'id' | 'title' | 'slug'>;
+    result_interpretation?: Pick<
+        ResultInterpretation,
+        'id' | 'title' | 'color'
+    > | null;
+    resultInterpretation?: ResultInterpretation | null;
+    responses?: DiagnosticResponse[];
+};
+
+/* -------------------------------------------------------------------------
+ * Laravel paginator shape
+ * ---------------------------------------------------------------------- */
+
+export type Paginator<T> = {
+    data: T[];
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+    first_page_url: string | null;
+    last_page_url: string | null;
+    next_page_url: string | null;
+    prev_page_url: string | null;
+    path: string;
+    links: Array<{ url: string | null; label: string; active: boolean }>;
+};

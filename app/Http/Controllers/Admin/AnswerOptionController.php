@@ -53,7 +53,7 @@ class AnswerOptionController extends Controller
         Question $question,
         AnswerOption $answerOption
     ): RedirectResponse {
-        $option->update($request->validated());
+        $answerOption->update($request->validated());
 
         return redirect()
             ->route('admin.questionnaires.questions.edit', [$questionnaire, $question])
@@ -65,9 +65,9 @@ class AnswerOptionController extends Controller
         Question $question,
         AnswerOption $answerOption
     ): RedirectResponse {
-        $this->authorize('delete', $option);
+        $this->authorize('delete', $answerOption);
 
-        $option->delete();
+        $answerOption->delete();
 
         return redirect()
             ->route('admin.questionnaires.questions.edit', [$questionnaire, $question])
