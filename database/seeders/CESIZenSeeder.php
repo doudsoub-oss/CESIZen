@@ -118,6 +118,15 @@ class CESIZenSeeder extends Seeder
         MenuItem::create(['menu_id' => $mainMenu->id, 'title' => 'Informations', 'url' => '/informations', 'position' => 1]);
         MenuItem::create(['menu_id' => $mainMenu->id, 'title' => 'Diagnostic', 'url' => '/diagnostic', 'position' => 2]);
 
+        // Footer menu
+        $footerMenu = Menu::create([
+            'name' => 'Pied de page',
+            'location' => 'footer',
+        ]);
+
+        MenuItem::create(['menu_id' => $footerMenu->id, 'title' => 'Mentions légales', 'url' => '/pages/mentions-legales', 'position' => 0]);
+        MenuItem::create(['menu_id' => $footerMenu->id, 'title' => 'Informations', 'url' => '/informations', 'position' => 1]);
+
         // Create stress questionnaire (PSS-10 inspired)
         $questionnaire = Questionnaire::create([
             'title' => 'Échelle de stress perçu',
