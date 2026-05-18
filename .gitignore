@@ -37,3 +37,4 @@ node_modules
 docs/devPlan.md
 docs/devStatus.md
 docs/testCoverage.md
+docs/db-inspect.md
