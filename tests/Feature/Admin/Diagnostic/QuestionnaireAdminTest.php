@@ -154,4 +154,41 @@ class QuestionnaireAdminTest extends TestCase
             ])
             ->assertSessionHasErrors('max_score');
     }
+
+    public function test_admin_can_update_an_answer_option(): void
+    {
+        $this->actingAsAdmin();
+        $q = Questionnaire::factory()->create();
+        $question = Question::factory()->create(['questionnaire_id' => $q->id]);
+        $option = AnswerOption::factory()->create([
+            'question_id' => $question->id,
+            'label' => 'Avant',
+            'score' => 1,
+        ]);
+
+        $this->put(
+            route('admin.questionnaires.questions.answer-options.update', [$q, $question, $option]),
+            ['label' => 'Après', 'score' => 4, 'position' => 0]
+        )->assertRedirect(route('admin.questionnaires.questions.edit', [$q, $question]));
+
+        $this->assertDatabaseHas('answer_options', [
+            'id' => $option->id,
+            'label' => 'Après',
+            'score' => 4,
+        ]);
+    }
+
+    public function test_admin_can_delete_an_answer_option(): void
+    {
+        $this->actingAsAdmin();
+        $q = Questionnaire::factory()->create();
+        $question = Question::factory()->create(['questionnaire_id' => $q->id]);
+        $option = AnswerOption::factory()->create(['question_id' => $question->id]);
+
+        $this->delete(
+            route('admin.questionnaires.questions.answer-options.destroy', [$q, $question, $option])
+        )->assertRedirect(route('admin.questionnaires.questions.edit', [$q, $question]));
+
+        $this->assertDatabaseMissing('answer_options', ['id' => $option->id]);
+    }
 }
