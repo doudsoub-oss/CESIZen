@@ -131,6 +131,26 @@ export type Diagnostic = {
 };
 
 /* -------------------------------------------------------------------------
+ * Account management
+ * ---------------------------------------------------------------------- */
+
+export type RoleOption = {
+    value: string;
+    label: string;
+};
+
+export type ManagedUser = {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+    is_active: boolean;
+    diagnostics_count?: number;
+    created_at?: string;
+    email_verified_at?: string | null;
+};
+
+/* -------------------------------------------------------------------------
  * Laravel paginator shape
  * ---------------------------------------------------------------------- */
 
