@@ -48,14 +48,22 @@ class UserController extends Controller
         ]);
     }
 
-    public function show(User $user): Response
+    public function show(Request $request, User $user): Response
     {
         $this->authorize('view', $user);
 
         $user->loadCount('diagnostics');
 
+        $actor = $request->user();
+
         return Inertia::render('admin/users/Show', [
             'user' => $user,
+            'roleOptions' => $this->roleOptions($actor),
+            'can' => [
+                'changeRole' => $actor->can('changeRole', [$user, $user->role]),
+                'toggleActive' => $actor->can('toggleActive', $user),
+                'delete' => $actor->can('delete', $user),
+            ],
         ]);
     }
 
