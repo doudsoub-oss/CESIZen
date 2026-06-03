@@ -2,7 +2,10 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { ArrowRight } from 'lucide-vue-next';
 import PublicLayout from '@/layouts/PublicLayout.vue';
-import { category as categoryRoute } from '@/routes/informations';
+import {
+    category as categoryRoute,
+    content as contentRoute,
+} from '@/routes/informations';
 import type { CategorySummary } from '@/types';
 
 defineProps<{
@@ -59,9 +62,10 @@ defineProps<{
                         >
                             <Link
                                 :href="
-                                    categoryRoute({ slug: category.slug }) +
-                                    '/' +
-                                    content.slug
+                                    contentRoute({
+                                        category: category.slug,
+                                        content: content.slug,
+                                    })
                                 "
                                 class="text-primary hover:underline"
                             >

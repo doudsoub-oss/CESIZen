@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-vue-next';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import {
     category as categoryRoute,
+    content as contentRoute,
     index as informationsIndex,
 } from '@/routes/informations';
 import type { CategorySummary } from '@/types';
@@ -93,9 +94,10 @@ defineProps<{
                         <h3 class="text-base font-semibold">
                             <Link
                                 :href="
-                                    categoryRoute({ slug: category.slug }) +
-                                    '/' +
-                                    content.slug
+                                    contentRoute({
+                                        category: category.slug,
+                                        content: content.slug,
+                                    })
                                 "
                                 class="hover:underline"
                             >
@@ -110,9 +112,10 @@ defineProps<{
                         </p>
                         <Link
                             :href="
-                                categoryRoute({ slug: category.slug }) +
-                                '/' +
-                                content.slug
+                                contentRoute({
+                                    category: category.slug,
+                                    content: content.slug,
+                                })
                             "
                             class="mt-auto pt-3 text-sm font-medium text-primary hover:underline"
                         >
