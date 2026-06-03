@@ -20,6 +20,9 @@ class StoreContentRequest extends FormRequest
         if (! $this->filled('slug') && $this->filled('title')) {
             $this->merge(['slug' => Str::slug((string) $this->input('title'))]);
         }
+
+        // Normalize the checkbox so an unchecked box submits a real `false`.
+        $this->merge(['is_published' => $this->boolean('is_published')]);
     }
 
     public function rules(): array

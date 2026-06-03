@@ -99,4 +99,24 @@ class ContentControllerTest extends TestCase
             ->assertRedirect(route('admin.contents.index'));
         $this->assertDatabaseMissing('contents', ['id' => $content->id]);
     }
+
+    public function test_admin_can_unpublish_a_content_via_update(): void
+    {
+        $this->actingAsAdmin();
+        $content = Content::factory()->page()->create([
+            'slug' => 'legal',
+            'is_published' => true,
+        ]);
+
+        // The "Publié" checkbox is unticked, so `is_published` is absent from
+        // the request — it must still persist as false.
+        $this->put(route('admin.contents.update', $content), [
+            'title' => $content->title,
+            'slug' => 'legal',
+            'body' => 'corps',
+            'type' => ContentType::Page->value,
+        ])->assertRedirect(route('admin.contents.index'));
+
+        $this->assertFalse($content->fresh()->is_published);
+    }
 }

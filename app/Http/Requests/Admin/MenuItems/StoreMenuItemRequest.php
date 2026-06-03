@@ -15,6 +15,12 @@ class StoreMenuItemRequest extends FormRequest
         return $this->user()?->can('create', MenuItem::class) ?? false;
     }
 
+    protected function prepareForValidation(): void
+    {
+        // Normalize the checkbox so an unchecked box submits a real `false`.
+        $this->merge(['is_active' => $this->boolean('is_active')]);
+    }
+
     public function rules(): array
     {
         /** @var Menu $menu */
