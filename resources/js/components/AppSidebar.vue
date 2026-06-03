@@ -1,8 +1,14 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid } from 'lucide-vue-next';
+import { Link, usePage } from '@inertiajs/vue3';
+import {
+    BookOpen,
+    HeartPulse,
+    Home,
+    LayoutGrid,
+    ShieldCheck,
+} from 'lucide-vue-next';
+import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
-import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
 import {
@@ -14,29 +20,41 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { dashboard } from '@/routes';
+import { dashboard, home } from '@/routes';
+import { dashboard as adminDashboard } from '@/routes/admin';
+import { index as diagnosticIndex } from '@/routes/diagnostic';
+import { index as informationsIndex } from '@/routes/informations';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
+const page = usePage();
 
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
-        icon: BookOpen,
-    },
-];
+const isAdmin = computed(() => {
+    const role = page.props.auth.user?.role;
+
+    return role === 'admin' || role === 'super_admin';
+});
+
+// The authenticated area must stay connected to the public site so users can
+// leave the dashboard to read information and run diagnostics, and back-office
+// users can reach the admin panel.
+const mainNavItems = computed<NavItem[]>(() => {
+    const items: NavItem[] = [
+        { title: 'Tableau de bord', href: dashboard(), icon: LayoutGrid },
+        { title: 'Accueil du site', href: home(), icon: Home },
+        { title: 'Informations', href: informationsIndex(), icon: BookOpen },
+        { title: 'Diagnostic', href: diagnosticIndex(), icon: HeartPulse },
+    ];
+
+    if (isAdmin.value) {
+        items.push({
+            title: 'Administration',
+            href: adminDashboard(),
+            icon: ShieldCheck,
+        });
+    }
+
+    return items;
+});
 </script>
 
 <template>
@@ -58,7 +76,6 @@ const footerNavItems: NavItem[] = [
         </SidebarContent>
 
         <SidebarFooter>
-            <NavFooter :items="footerNavItems" />
             <NavUser />
         </SidebarFooter>
     </Sidebar>
