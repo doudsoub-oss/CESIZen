@@ -96,6 +96,18 @@ services:
     networks:
       - cesizen
 
+  # Local mail catcher: captures all outgoing mail (e.g. password-reset links).
+  # SMTP on 1025 (used by the app), web UI on 8025.
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: cesizen-mailpit
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+    networks:
+      - cesizen
+
 volumes:
   cesizen-pgdata:
   app-vendor:
