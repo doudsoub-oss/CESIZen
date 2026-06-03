@@ -4,7 +4,6 @@ namespace App\Http\Requests\Admin\MenuItems;
 
 use App\Models\Menu;
 use App\Models\MenuItem;
-use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,8 +27,8 @@ class StoreMenuItemRequest extends FormRequest
 
         return [
             'title' => ['required', 'string', 'max:255'],
-            'url' => ['nullable', 'string', 'max:2048'],
-            'content_id' => ['nullable', 'integer', 'exists:contents,id'],
+            // A menu item targets a site content; its URL is resolved from the content.
+            'content_id' => ['required', 'integer', 'exists:contents,id'],
             'parent_id' => [
                 'nullable',
                 'integer',
@@ -37,21 +36,6 @@ class StoreMenuItemRequest extends FormRequest
             ],
             'position' => ['nullable', 'integer', 'min:0'],
             'is_active' => ['boolean'],
-        ];
-    }
-
-    /** Cross-field check: a menu item must have a target. */
-    public function after(): array
-    {
-        return [
-            function (Validator $validator): void {
-                if (! $this->filled('url') && ! $this->filled('content_id')) {
-                    $validator->errors()->add(
-                        'target',
-                        __('Une entrée de menu doit pointer vers une URL ou un contenu.')
-                    );
-                }
-            },
         ];
     }
 }

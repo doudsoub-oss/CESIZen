@@ -16,6 +16,7 @@ const props = defineProps<{
     menu: Menu;
     item: MenuItem;
     parentOptions: Array<{ id: number; title: string }>;
+    contentOptions: Array<{ id: number; label: string }>;
 }>();
 
 const breadcrumbs = computed<BreadcrumbItem[]>(() => [
@@ -65,22 +66,31 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="url">
-                        URL
+                    <Label for="content_id">
+                        Contenu lié
                         <span class="text-xs text-muted-foreground">
-                            (interne : /informations — ou externe : https://…)
+                            (le lien est construit à partir du contenu choisi)
                         </span>
                     </Label>
-                    <Input
-                        id="url"
-                        name="url"
+                    <select
+                        id="content_id"
+                        name="content_id"
                         required
-                        autocomplete="off"
-                        placeholder="/informations"
-                        :default-value="item.url ?? ''"
-                    />
-                    <InputError :message="errors.url" />
-                    <InputError :message="errors.target" />
+                        class="rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    >
+                        <option value="" disabled :selected="!item.content_id">
+                            Choisir un contenu…
+                        </option>
+                        <option
+                            v-for="option in contentOptions"
+                            :key="option.id"
+                            :value="option.id"
+                            :selected="option.id === item.content_id"
+                        >
+                            {{ option.label }}
+                        </option>
+                    </select>
+                    <InputError :message="errors.content_id" />
                 </div>
 
                 <div class="grid gap-2">

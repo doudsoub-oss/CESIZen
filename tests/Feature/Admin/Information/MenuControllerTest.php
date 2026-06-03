@@ -2,10 +2,13 @@
 
 namespace Tests\Feature\Admin\Information;
 
+use App\Models\Category;
+use App\Models\Content;
 use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 class MenuControllerTest extends TestCase
@@ -41,26 +44,29 @@ class MenuControllerTest extends TestCase
         $this->assertDatabaseMissing('menus', ['id' => $menu->id]);
     }
 
-    public function test_admin_can_add_a_menu_item_to_a_menu(): void
+    public function test_admin_can_add_a_content_linked_menu_item(): void
     {
         $this->actingAsAdmin();
         $menu = Menu::factory()->main()->create();
+        $content = Content::factory()->create();
 
         $this->post(route('admin.menus.items.store', $menu), [
             'title' => 'Accueil',
-            'url' => '/',
+            'content_id' => $content->id,
             'position' => 0,
             'is_active' => true,
         ])->assertRedirect(route('admin.menus.edit', $menu));
 
+        // The raw URL is cleared: the link is resolved from the linked content.
         $this->assertDatabaseHas('menu_items', [
             'menu_id' => $menu->id,
             'title' => 'Accueil',
-            'url' => '/',
+            'content_id' => $content->id,
+            'url' => null,
         ]);
     }
 
-    public function test_menu_item_without_url_or_content_is_rejected(): void
+    public function test_menu_item_without_a_content_is_rejected(): void
     {
         $this->actingAsAdmin();
         $menu = Menu::factory()->main()->create();
@@ -70,7 +76,7 @@ class MenuControllerTest extends TestCase
                 'title' => 'Vide',
             ]);
 
-        $response->assertSessionHasErrors('target');
+        $response->assertSessionHasErrors('content_id');
     }
 
     public function test_menu_item_parent_must_belong_to_same_menu(): void
@@ -79,11 +85,12 @@ class MenuControllerTest extends TestCase
         $menuA = Menu::factory()->main()->create();
         $menuB = Menu::factory()->footer()->create();
         $itemInB = MenuItem::factory()->create(['menu_id' => $menuB->id]);
+        $content = Content::factory()->create();
 
         $response = $this->from(route('admin.menus.items.create', $menuA))
             ->post(route('admin.menus.items.store', $menuA), [
                 'title' => 'Cross',
-                'url' => '/x',
+                'content_id' => $content->id,
                 'parent_id' => $itemInB->id,
             ]);
 
@@ -94,16 +101,42 @@ class MenuControllerTest extends TestCase
     {
         $this->actingAsAdmin();
         $menu = Menu::factory()->main()->create();
+        $content = Content::factory()->create();
         $parent = MenuItem::factory()->create(['menu_id' => $menu->id]);
         $child = MenuItem::factory()->create(['menu_id' => $menu->id, 'parent_id' => $parent->id]);
 
         $response = $this->from(route('admin.menus.items.edit', [$menu, $parent]))
             ->put(route('admin.menus.items.update', [$menu, $parent]), [
                 'title' => $parent->title,
-                'url' => '/x',
+                'content_id' => $content->id,
                 'parent_id' => $child->id,
             ]);
 
         $response->assertSessionHasErrors('parent_id');
+    }
+
+    public function test_menu_item_url_is_resolved_from_its_linked_content(): void
+    {
+        $category = Category::factory()->create(['slug' => 'sante']);
+        $content = Content::factory()->create([
+            'category_id' => $category->id,
+            'slug' => 'gerer-son-stress',
+            'is_published' => true,
+        ]);
+        $menu = Menu::factory()->main()->create();
+        MenuItem::factory()->create([
+            'menu_id' => $menu->id,
+            'title' => 'Gérer son stress',
+            'url' => null,
+            'content_id' => $content->id,
+            'is_active' => true,
+        ]);
+
+        // The shared navigation payload builds the URL from the content's category + slug.
+        $this->get('/')->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('navigation.main', fn ($items) => collect($items)->contains(
+                fn ($i) => str_contains((string) $i['url'], '/informations/sante/gerer-son-stress')
+            ))
+        );
     }
 }
