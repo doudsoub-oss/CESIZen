@@ -3,6 +3,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { Menu as MenuIcon, ShieldCheck } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import BackButton from '@/components/BackButton.vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -48,6 +49,7 @@ const activeStyles = 'text-foreground font-semibold';
             <div
                 class="mx-auto flex h-16 w-full max-w-6xl items-center gap-4 px-4"
             >
+                <BackButton />
                 <Link
                     :href="home()"
                     class="flex items-center gap-2 font-semibold tracking-tight"
