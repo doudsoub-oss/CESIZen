@@ -72,11 +72,8 @@ const formatPublishedAt = (raw: string | null): string | null => {
                 </p>
             </header>
 
-            <div
-                class="prose prose-neutral dark:prose-invert max-w-none whitespace-pre-line"
-            >
-                {{ content.body }}
-            </div>
+            <!-- Body is admin-authored Markdown rendered to sanitized HTML server-side. -->
+            <div class="markdown-content" v-html="content.body_html" />
         </article>
     </PublicLayout>
 </template>
