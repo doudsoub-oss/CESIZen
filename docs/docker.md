@@ -6,11 +6,12 @@ This document is the canonical reference for running CESIZen locally with Docker
 
 | Service | Image | Role |
 |---|---|---|
-| `app` | `cesizen/app:dev` (built from `docker/Dockerfile`) | PHP 8.4-FPM running the Laravel app |
+| `app` | `cesizen/app:dev` (built from `docker/Dockerfile` — `php:8.4-fpm-bookworm` with Node 22 bundled) | PHP 8.4-FPM running the Laravel app |
 | `web` | `nginx:1.27-alpine` | HTTP front, proxies PHP to `app:9000` |
 | `db` | `postgres:16-alpine` | PostgreSQL 16 database |
-| `node` | `node:22-alpine` | Vite dev server (HMR) |
+| `node` | `cesizen/app:dev` (same image as `app`) | Vite dev server (HMR) |
 | `queue` | `cesizen/app:dev` | `php artisan queue:work` worker |
+| `mailpit` | `axllent/mailpit:latest` | Local mail catcher — captures all outgoing mail (e.g. password-reset links); SMTP on `1025`, web UI on `8025` |
 
 The stack deviates from the cahier des charges §8.2 (which listed Blade + Alpine.js): the project actually uses **Inertia + Vue 3 + Tailwind v4**. Database engine matches the spec (**PostgreSQL**). The authoritative database schema is `docs/database-schema.md` — the spec PDF's §8.3 is outdated and must not be used.
 
@@ -42,6 +43,7 @@ When `docker compose up` settles, the app is available at:
 
 - **App**: <http://localhost:8080>
 - **Vite HMR**: <http://localhost:5173> (used by the browser, not directly by you)
+- **Mailpit (mail UI)**: <http://localhost:8025> — every outgoing e-mail (password reset, e-mail verification) is captured here; nothing leaves the machine. Mail is pre-wired to it via `MAIL_MAILER=smtp`, `MAIL_HOST=mailpit`, `MAIL_PORT=1025`.
 - **Postgres**: `localhost:5433` (user/db/password all `cesizen` by default — host port 5433 to avoid conflict with a host-side Postgres on 5432; override with `DB_PORT_HOST` in `.env`)
 
 Seeded accounts (password `password`):
@@ -59,6 +61,8 @@ Seeded accounts (password `password`):
 | `APP_PORT` | `8080` | Host port for Nginx |
 | `VITE_PORT` | `5173` | Host port for the Vite dev server |
 | `DB_PORT_HOST` | `5433` | Host port for Postgres (only needed if you connect from a host-side client). Default is `5433` so it doesn't clash with a host-installed Postgres on `5432`. |
+| `MAILPIT_SMTP_PORT` | `1025` | Host port for Mailpit SMTP (the app sends mail to `mailpit:1025` over the internal network) |
+| `MAILPIT_UI_PORT` | `8025` | Host port for the Mailpit web UI |
 | `UID` / `GID` | `1000` | Used when building the `app` image so bind-mounted files are owned by your host user. Override with `UID=$(id -u) GID=$(id -g) docker compose build` if your host UID differs. |
 
 ## Command cheat sheet
@@ -103,3 +107,4 @@ UID=$(id -u) GID=$(id -g) docker compose build app queue
 - **Vite assets not loading** — confirm `npm run dev` is running (`docker compose logs node`). The browser fetches assets directly from `http://localhost:5173`; if your `APP_URL` host differs, Vite's hot file won't match.
 - **`Permission denied` on `storage/` or `bootstrap/cache/`** — rebuild with `UID=$(id -u) GID=$(id -g) docker compose build`.
 - **Stuck migration** — `docker compose exec app php artisan migrate:status` then `docker compose exec app php artisan migrate --force` to retry.
+- **Password-reset / verification e-mail "not received"** — by design it never reaches a real inbox; open Mailpit at <http://localhost:8025> to read every captured message.
