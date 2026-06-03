@@ -118,7 +118,6 @@ export type Question = {
     position: number;
     is_required: boolean;
     answer_options?: AnswerOption[];
-    answerOptions?: AnswerOption[];
 };
 
 export type ResultInterpretation = {
@@ -155,7 +154,6 @@ export type DiagnosticResponse = {
     score: number;
     question?: Pick<Question, 'id' | 'text'>;
     answer_option?: Pick<AnswerOption, 'id' | 'label' | 'score'>;
-    answerOption?: Pick<AnswerOption, 'id' | 'label' | 'score'>;
 };
 
 export type Diagnostic = {

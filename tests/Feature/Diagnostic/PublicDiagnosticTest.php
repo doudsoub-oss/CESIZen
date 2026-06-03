@@ -9,6 +9,7 @@ use App\Models\Questionnaire;
 use App\Models\ResultInterpretation;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
 class PublicDiagnosticTest extends TestCase
@@ -57,6 +58,27 @@ class PublicDiagnosticTest extends TestCase
         $q = Questionnaire::factory()->create(['is_active' => false]);
 
         $this->get(route('diagnostic.show', $q))->assertNotFound();
+    }
+
+    /**
+     * The run page must expose each question's options under the snake_case
+     * `answer_options` key (Eloquent serializes the `answerOptions` relation
+     * that way); the Vue component reads exactly that key to render the radios.
+     */
+    public function test_show_exposes_answer_options_under_snake_case_key(): void
+    {
+        [$q] = $this->seedQuestionnaire();
+
+        $this->get(route('diagnostic.show', $q))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('public/Diagnostic/Run')
+                ->has('questionnaire.questions.0.answer_options', 2, fn (AssertableInertia $option) => $option
+                    ->has('id')
+                    ->has('label')
+                    ->has('score')
+                    ->etc()
+                )
+            );
     }
 
     public function test_anonymous_submission_returns_result_without_db_write(): void
