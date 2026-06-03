@@ -38,7 +38,6 @@ class StoreContentRequest extends FormRequest
                 Rule::requiredIf(fn () => $this->input('type') !== ContentType::Page->value),
             ],
             'is_published' => ['boolean'],
-            'published_at' => ['nullable', 'date'],
         ];
     }
 }

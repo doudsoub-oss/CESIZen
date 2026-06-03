@@ -40,8 +40,12 @@ class ContentController extends Controller
 
     public function store(StoreContentRequest $request): RedirectResponse
     {
+        $validated = $request->validated();
+
         Content::create([
-            ...$request->validated(),
+            ...$validated,
+            // The publication timestamp is derived from the publish state, never client-supplied.
+            'published_at' => $validated['is_published'] ? now() : null,
             'created_by' => $request->user()->id,
         ]);
 
@@ -63,7 +67,15 @@ class ContentController extends Controller
 
     public function update(UpdateContentRequest $request, Content $content): RedirectResponse
     {
-        $content->update($request->validated());
+        $validated = $request->validated();
+
+        $content->update([
+            ...$validated,
+            // Stamp on first publish, keep the original date on re-save, clear when unpublished.
+            'published_at' => $validated['is_published']
+                ? ($content->published_at ?? now())
+                : null,
+        ]);
 
         return redirect()
             ->route('admin.contents.index')

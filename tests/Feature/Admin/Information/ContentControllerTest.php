@@ -119,4 +119,78 @@ class ContentControllerTest extends TestCase
 
         $this->assertFalse($content->fresh()->is_published);
     }
+
+    public function test_publishing_stamps_published_at_automatically_and_ignores_user_input(): void
+    {
+        $this->actingAsAdmin();
+        $category = Category::factory()->create();
+
+        // A client-supplied published_at must be ignored in favour of the server clock.
+        $this->post(route('admin.contents.store'), [
+            'title' => 'Daté',
+            'body' => 'corps',
+            'type' => ContentType::Article->value,
+            'category_id' => $category->id,
+            'is_published' => true,
+            'published_at' => '2000-01-01',
+        ])->assertRedirect(route('admin.contents.index'));
+
+        $content = Content::where('slug', 'date')->firstOrFail();
+        $this->assertNotNull($content->published_at);
+        $this->assertTrue($content->published_at->isToday());
+    }
+
+    public function test_storing_an_unpublished_content_leaves_published_at_null(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->post(route('admin.contents.store'), [
+            'title' => 'Brouillon',
+            'body' => 'corps',
+            'type' => ContentType::Page->value,
+            'is_published' => false,
+        ])->assertRedirect(route('admin.contents.index'));
+
+        $content = Content::where('slug', 'brouillon')->firstOrFail();
+        $this->assertNull($content->published_at);
+    }
+
+    public function test_publishing_via_update_sets_published_at(): void
+    {
+        $this->actingAsAdmin();
+        $content = Content::factory()->page()->create([
+            'is_published' => false,
+            'published_at' => null,
+        ]);
+
+        $this->put(route('admin.contents.update', $content), [
+            'title' => $content->title,
+            'slug' => $content->slug,
+            'body' => 'corps',
+            'type' => ContentType::Page->value,
+            'is_published' => true,
+        ])->assertRedirect(route('admin.contents.index'));
+
+        $this->assertNotNull($content->fresh()->published_at);
+        $this->assertTrue($content->fresh()->published_at->isToday());
+    }
+
+    public function test_unpublishing_via_update_clears_published_at(): void
+    {
+        $this->actingAsAdmin();
+        $content = Content::factory()->page()->create([
+            'is_published' => true,
+            'published_at' => now()->subDay(),
+        ]);
+
+        // Checkbox unticked ⇒ is_published absent ⇒ content is unpublished.
+        $this->put(route('admin.contents.update', $content), [
+            'title' => $content->title,
+            'slug' => $content->slug,
+            'body' => 'corps',
+            'type' => ContentType::Page->value,
+        ])->assertRedirect(route('admin.contents.index'));
+
+        $this->assertNull($content->fresh()->published_at);
+    }
 }

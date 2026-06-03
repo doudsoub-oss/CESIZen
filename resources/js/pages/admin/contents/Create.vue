@@ -141,35 +141,19 @@ const breadcrumbs: BreadcrumbItem[] = [
                     <InputError :message="errors.body" />
                 </div>
 
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <div class="grid gap-2">
-                        <Label for="published_at">
-                            Date de publication
-                            <span class="text-xs text-muted-foreground">
-                                (optionnelle)
-                            </span>
-                        </Label>
-                        <Input
-                            id="published_at"
-                            name="published_at"
-                            type="date"
-                        />
-                        <InputError :message="errors.published_at" />
-                    </div>
-
-                    <label
-                        class="flex items-center gap-2 self-end pb-2 text-sm"
-                    >
-                        <input
-                            type="checkbox"
-                            name="is_published"
-                            value="1"
-                            class="size-4 accent-primary"
-                            checked
-                        />
-                        Publié
-                    </label>
-                </div>
+                <label class="flex items-center gap-2 text-sm">
+                    <input
+                        type="checkbox"
+                        name="is_published"
+                        value="1"
+                        class="size-4 accent-primary"
+                        checked
+                    />
+                    Publié
+                    <span class="text-xs text-muted-foreground">
+                        (la date de publication est enregistrée automatiquement)
+                    </span>
+                </label>
 
                 <div class="flex justify-end gap-2">
                     <Button as-child variant="ghost">

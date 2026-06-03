@@ -161,26 +161,8 @@ const publishedDate = computed(() => props.content.published_at?.slice(0, 10));
                     <InputError :message="errors.body" />
                 </div>
 
-                <div class="grid gap-4 sm:grid-cols-2">
-                    <div class="grid gap-2">
-                        <Label for="published_at">
-                            Date de publication
-                            <span class="text-xs text-muted-foreground">
-                                (optionnelle)
-                            </span>
-                        </Label>
-                        <Input
-                            id="published_at"
-                            name="published_at"
-                            type="date"
-                            :default-value="publishedDate"
-                        />
-                        <InputError :message="errors.published_at" />
-                    </div>
-
-                    <label
-                        class="flex items-center gap-2 self-end pb-2 text-sm"
-                    >
+                <div class="grid gap-2">
+                    <label class="flex items-center gap-2 text-sm">
                         <input
                             type="checkbox"
                             name="is_published"
@@ -190,6 +172,12 @@ const publishedDate = computed(() => props.content.published_at?.slice(0, 10));
                         />
                         Publié
                     </label>
+                    <p
+                        v-if="publishedDate"
+                        class="text-xs text-muted-foreground"
+                    >
+                        Date de publication (automatique) : {{ publishedDate }}
+                    </p>
                 </div>
 
                 <div class="flex items-center justify-between gap-2">
