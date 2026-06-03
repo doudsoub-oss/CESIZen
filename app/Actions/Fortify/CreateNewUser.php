@@ -4,6 +4,7 @@ namespace App\Actions\Fortify;
 
 use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
+use App\Enums\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
@@ -24,10 +25,16 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
         ])->validate();
 
+        // Set role/active explicitly so the freshly-created in-memory instance
+        // Fortify logs in is already authoritative — otherwise `is_active` is
+        // null on the post-registration request and `EnsureUserIsActive`
+        // logs the new user straight back out.
         return User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => $input['password'],
+            'role' => Role::User,
+            'is_active' => true,
         ]);
     }
 }
