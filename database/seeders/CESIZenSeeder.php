@@ -96,7 +96,7 @@ class CESIZenSeeder extends Seeder
             'created_by' => $admin->id,
         ]);
 
-        Content::create([
+        $mentionsLegales = Content::create([
             'category_id' => null,
             'title' => 'Mentions légales',
             'slug' => 'mentions-legales',
@@ -124,7 +124,8 @@ class CESIZenSeeder extends Seeder
             'location' => 'footer',
         ]);
 
-        MenuItem::create(['menu_id' => $footerMenu->id, 'title' => 'Mentions légales', 'url' => '/pages/mentions-legales', 'position' => 0]);
+        // Link to the content by reference so the URL is resolved from the page itself.
+        MenuItem::create(['menu_id' => $footerMenu->id, 'title' => 'Mentions légales', 'content_id' => $mentionsLegales->id, 'position' => 0]);
         MenuItem::create(['menu_id' => $footerMenu->id, 'title' => 'Informations', 'url' => '/informations', 'position' => 1]);
 
         // Create stress questionnaire (PSS-10 inspired)

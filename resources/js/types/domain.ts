@@ -44,6 +44,7 @@ export type ContentSummary = {
 
 export type ContentDetail = ContentSummary & {
     body: string;
+    body_html?: string;
     category?: CategorySummary | null;
     author?: {
         id: number;
@@ -51,6 +52,51 @@ export type ContentDetail = ContentSummary & {
     } | null;
     created_at: string;
     updated_at: string;
+};
+
+/* -------------------------------------------------------------------------
+ * Information module — admin payloads
+ * ---------------------------------------------------------------------- */
+
+/** Generic `{ id, name }` option used by category/content selects. */
+export type IdNameOption = { id: number; name: string };
+
+/** Generic `{ value, label }` option (content types, etc.). */
+export type SelectOption = { value: string; label: string };
+
+/** Category row in the admin listing (parent + content count). */
+export type CategoryRow = CategorySummary & {
+    parent?: { id: number; name: string } | null;
+    contents_count?: number;
+};
+
+/** Content row in the admin listing (category + author). */
+export type ContentRow = ContentSummary & {
+    category?: { id: number; name: string; slug: string } | null;
+    author?: { id: number; name: string } | null;
+    updated_at?: string;
+};
+
+export type MenuLocation = 'main' | 'footer' | 'sidebar';
+
+export type MenuItem = {
+    id: number;
+    menu_id: number;
+    parent_id: number | null;
+    title: string;
+    url: string | null;
+    content_id: number | null;
+    position: number;
+    is_active: boolean;
+    content?: { id: number; title: string } | null;
+};
+
+export type Menu = {
+    id: number;
+    name: string;
+    location: MenuLocation;
+    items_count?: number;
+    items?: MenuItem[];
 };
 
 /* -------------------------------------------------------------------------
@@ -72,7 +118,6 @@ export type Question = {
     position: number;
     is_required: boolean;
     answer_options?: AnswerOption[];
-    answerOptions?: AnswerOption[];
 };
 
 export type ResultInterpretation = {
@@ -109,7 +154,6 @@ export type DiagnosticResponse = {
     score: number;
     question?: Pick<Question, 'id' | 'text'>;
     answer_option?: Pick<AnswerOption, 'id' | 'label' | 'score'>;
-    answerOption?: Pick<AnswerOption, 'id' | 'label' | 'score'>;
 };
 
 export type Diagnostic = {

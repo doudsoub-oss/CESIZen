@@ -87,4 +87,35 @@ class PublicInformationTest extends TestCase
 
         $this->get(route('pages.show', $content))->assertNotFound();
     }
+
+    public function test_content_body_is_rendered_from_markdown_to_html(): void
+    {
+        $category = Category::factory()->create();
+        $content = Content::factory()->article()->create([
+            'category_id' => $category->id,
+            'body' => "## Sous-titre\n\nUn paragraphe avec du **gras**.",
+        ]);
+
+        $this->get(route('informations.content', [$category, $content]))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where(
+                'content.body_html',
+                fn ($html) => str_contains((string) $html, '<h2>')
+                    && str_contains((string) $html, '<strong>gras</strong>'),
+            ));
+    }
+
+    public function test_content_body_html_escapes_raw_html(): void
+    {
+        $content = Content::factory()->page()->create([
+            'body' => 'Avant <script>alert(1)</script> après.',
+        ]);
+
+        $this->get(route('pages.show', $content))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where(
+                'content.body_html',
+                fn ($html) => ! str_contains((string) $html, '<script>'),
+            ));
+    }
 }

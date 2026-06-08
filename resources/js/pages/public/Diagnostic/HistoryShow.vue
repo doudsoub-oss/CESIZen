@@ -105,7 +105,7 @@ const interpretation = props.diagnostic.resultInterpretation ?? null;
                         <p class="mt-1 text-muted-foreground">
                             Réponse :
                             <span class="text-foreground">
-                                {{ response.answerOption?.label ?? '—' }}
+                                {{ response.answer_option?.label ?? '—' }}
                             </span>
                             <span class="ml-2 text-xs">
                                 ({{ response.score }} pt{{

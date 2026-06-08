@@ -216,9 +216,9 @@ function colorBg(color: string | null): string {
                                 {{ idx + 1 }}. {{ question.text }}
                             </p>
                             <p class="text-xs text-muted-foreground">
-                                {{ (question.answerOptions ?? []).length }}
+                                {{ (question.answer_options ?? []).length }}
                                 option{{
-                                    (question.answerOptions ?? []).length > 1
+                                    (question.answer_options ?? []).length > 1
                                         ? 's'
                                         : ''
                                 }}

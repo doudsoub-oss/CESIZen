@@ -21,7 +21,7 @@ class ContentController extends Controller
             throw new NotFoundHttpException;
         }
 
-        $content->load(['category', 'author']);
+        $content->load(['category', 'author'])->append('body_html');
 
         return Inertia::render('public/Information/Content', [
             'category' => $category,
@@ -39,7 +39,7 @@ class ContentController extends Controller
             throw new NotFoundHttpException;
         }
 
-        $content->load(['category', 'author']);
+        $content->load(['category', 'author'])->append('body_html');
 
         return Inertia::render('public/Pages/Show', [
             'content' => $content,

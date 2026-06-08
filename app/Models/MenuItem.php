@@ -40,17 +40,4 @@ class MenuItem extends Model
     {
         return $this->belongsTo(Content::class);
     }
-
-    public function getUrlAttribute($value): ?string
-    {
-        if ($value) {
-            return $value;
-        }
-
-        if ($this->content) {
-            return route('contents.show', $this->content->slug);
-        }
-
-        return null;
-    }
 }

@@ -22,6 +22,9 @@ class UpdateCategoryRequest extends FormRequest
         if (! $this->filled('slug') && $this->filled('name')) {
             $this->merge(['slug' => Str::slug((string) $this->input('name'))]);
         }
+
+        // Normalize the checkbox so an unchecked box submits a real `false`.
+        $this->merge(['is_active' => $this->boolean('is_active')]);
     }
 
     public function rules(): array

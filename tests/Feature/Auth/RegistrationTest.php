@@ -29,11 +29,39 @@ class RegistrationTest extends TestCase
         $response = $this->post(route('register.store'), [
             'name' => 'Test User',
             'email' => 'test@example.com',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'Password1!',
+            'password_confirmation' => 'Password1!',
         ]);
 
         $this->assertAuthenticated();
         $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
+    public function test_newly_registered_user_can_load_the_dashboard()
+    {
+        $this->post(route('register.store'), [
+            'name' => 'Fresh User',
+            'email' => 'fresh@example.com',
+            'password' => 'Password1!',
+            'password_confirmation' => 'Password1!',
+        ]);
+
+        $this->assertAuthenticated();
+
+        // The post-register redirect target must be reachable by the new user.
+        $this->get(route('dashboard'))->assertOk();
+    }
+
+    public function test_registration_rejects_a_password_without_complexity()
+    {
+        $response = $this->post(route('register.store'), [
+            'name' => 'Test User',
+            'email' => 'weak@example.com',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $response->assertSessionHasErrors('password');
+        $this->assertGuest();
     }
 }

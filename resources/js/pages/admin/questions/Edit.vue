@@ -39,7 +39,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => [
     },
 ]);
 
-const options = computed(() => props.question.answerOptions ?? []);
+const options = computed(() => props.question.answer_options ?? []);
 
 function confirmDelete(event: Event, message: string) {
     if (!window.confirm(message)) {

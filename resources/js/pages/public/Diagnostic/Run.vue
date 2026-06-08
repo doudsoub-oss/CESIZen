@@ -132,7 +132,7 @@ function errorFor(qid: number): string | undefined {
 
                         <div class="mt-4 grid gap-2 pl-10">
                             <label
-                                v-for="option in question.answerOptions ?? []"
+                                v-for="option in question.answer_options ?? []"
                                 :key="option.id"
                                 class="flex cursor-pointer items-center gap-3 rounded-md border border-transparent px-3 py-2 hover:border-border has-checked:border-primary has-checked:bg-primary/5"
                             >
