@@ -21,7 +21,7 @@ import {
 import UserMenuContent from '@/components/UserMenuContent.vue';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { getInitials } from '@/composables/useInitials';
-import { dashboard, home, login, register } from '@/routes';
+import { home, login, register } from '@/routes';
 import { dashboard as adminDashboard } from '@/routes/admin';
 
 const page = usePage();
@@ -87,12 +87,6 @@ const activeStyles = 'text-foreground font-semibold';
                         >
                             <ShieldCheck class="size-4" />
                             Administration
-                        </Link>
-                        <Link
-                            :href="dashboard()"
-                            class="hidden rounded-md border border-border px-3 py-1.5 text-sm hover:bg-accent sm:inline-block"
-                        >
-                            Tableau de bord
                         </Link>
                         <DropdownMenu>
                             <DropdownMenuTrigger :as-child="true">
