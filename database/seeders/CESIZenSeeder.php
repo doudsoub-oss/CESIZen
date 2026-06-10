@@ -101,7 +101,7 @@ class CESIZenSeeder extends Seeder
             'title' => 'Mentions légales',
             'slug' => 'mentions-legales',
             'excerpt' => 'Informations légales et politique de confidentialité.',
-            'body' => "## Éditeur\n\nCESIZen est une application développée dans le cadre d'un projet pédagogique.\n\n## Protection des données personnelles\n\nConformément au Règlement Général sur la Protection des Données (RGPD), vous disposez d'un droit d'accès, de rectification et de suppression de vos données personnelles.\n\n## Cookies\n\nL'application utilise uniquement les cookies strictement nécessaires à son fonctionnement (session, CSRF).",
+            'body' => "## Éditeur\n\nCESIZen est une application de sensibilisation à la santé mentale.\n\n## Protection des données personnelles\n\nConformément au Règlement Général sur la Protection des Données (RGPD), vous disposez d'un droit d'accès, de rectification et de suppression de vos données personnelles.\n\n## Cookies\n\nL'application utilise uniquement les cookies strictement nécessaires à son fonctionnement.",
             'type' => 'page',
             'is_published' => true,
             'published_at' => now(),
