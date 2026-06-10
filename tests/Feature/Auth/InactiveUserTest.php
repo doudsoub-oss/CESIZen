@@ -43,7 +43,9 @@ class InactiveUserTest extends TestCase
         // Simulate an admin deactivating the account.
         $user->forceFill(['is_active' => false])->save();
 
-        $response = $this->get(route('dashboard'));
+        // EnsureUserIsActive runs on every web request, so any authenticated
+        // navigation (here the settings profile page) bounces the account.
+        $response = $this->get(route('profile.edit'));
 
         $this->assertGuest();
         $response->assertRedirect(route('login'));

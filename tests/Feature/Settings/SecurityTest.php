@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Fortify\Features;
+use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
 class SecurityTest extends TestCase
@@ -87,6 +88,48 @@ class SecurityTest extends TestCase
                 ->missing('twoFactorEnabled')
                 ->missing('requiresConfirmation'),
             );
+    }
+
+    public function test_user_can_enable_confirm_and_disable_two_factor_authentication()
+    {
+        $this->skipUnlessFortifyFeature(Features::twoFactorAuthentication());
+
+        Features::twoFactorAuthentication([
+            'confirm' => true,
+            'confirmPassword' => true,
+        ]);
+
+        $user = User::factory()->create();
+
+        // Enable: a secret and recovery codes are generated but 2FA is not yet active.
+        $this->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => time()])
+            ->post(route('two-factor.enable'))
+            ->assertSessionHasNoErrors();
+
+        $user->refresh();
+        $this->assertNotNull($user->two_factor_secret);
+        $this->assertFalse($user->hasEnabledTwoFactorAuthentication());
+
+        // Confirm with a valid TOTP code derived from the freshly generated secret.
+        $code = app(Google2FA::class)->getCurrentOtp(decrypt($user->two_factor_secret));
+
+        $this->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => time()])
+            ->post(route('two-factor.confirm'), ['code' => $code])
+            ->assertSessionHasNoErrors();
+
+        $this->assertTrue($user->refresh()->hasEnabledTwoFactorAuthentication());
+
+        // Disable: the secret is cleared and 2FA is no longer active.
+        $this->actingAs($user)
+            ->withSession(['auth.password_confirmed_at' => time()])
+            ->delete(route('two-factor.disable'))
+            ->assertSessionHasNoErrors();
+
+        $user->refresh();
+        $this->assertFalse($user->hasEnabledTwoFactorAuthentication());
+        $this->assertNull($user->two_factor_secret);
     }
 
     public function test_password_can_be_updated()

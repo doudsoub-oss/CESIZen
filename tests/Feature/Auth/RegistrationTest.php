@@ -34,10 +34,10 @@ class RegistrationTest extends TestCase
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('home', absolute: false));
     }
 
-    public function test_newly_registered_user_can_load_the_dashboard()
+    public function test_newly_registered_user_can_load_the_home_page()
     {
         $this->post(route('register.store'), [
             'name' => 'Fresh User',
@@ -49,7 +49,7 @@ class RegistrationTest extends TestCase
         $this->assertAuthenticated();
 
         // The post-register redirect target must be reachable by the new user.
-        $this->get(route('dashboard'))->assertOk();
+        $this->get(route('home'))->assertOk();
     }
 
     public function test_registration_rejects_a_password_without_complexity()
