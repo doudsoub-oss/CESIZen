@@ -7,6 +7,7 @@ import {
     LayoutGrid,
     ListChecks,
     PanelsTopLeft,
+    ScrollText,
     Users as UsersIcon,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -24,6 +25,7 @@ import {
 } from '@/components/ui/sidebar';
 import { home } from '@/routes';
 import { dashboard as adminDashboard } from '@/routes/admin';
+import { index as auditLogsIndex } from '@/routes/admin/audit-logs';
 import { index as categoriesIndex } from '@/routes/admin/categories';
 import { index as contentsIndex } from '@/routes/admin/contents';
 import { index as menusIndex } from '@/routes/admin/menus';
@@ -61,6 +63,11 @@ const mainNavItems = computed<NavItem[]>(() => [
         title: 'Utilisateurs',
         href: usersIndex(),
         icon: UsersIcon,
+    },
+    {
+        title: "Journaux d'audit",
+        href: auditLogsIndex(),
+        icon: ScrollText,
     },
     {
         title: 'Retour au site',

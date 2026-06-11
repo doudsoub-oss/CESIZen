@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AnswerOptionController;
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ContentController;
 use App\Http\Controllers\Admin\MenuController;
@@ -74,4 +75,12 @@ Route::middleware(['auth', 'verified', 'active', 'role:admin'])
             ->name('users.toggle-active');
         Route::patch('users/{user}/role', [UserController::class, 'changeRole'])
             ->name('users.change-role');
+
+        /*
+        |----------------------------------------------------------------
+        | RGPD audit trail (§6.4 — read-only viewer)
+        |----------------------------------------------------------------
+        */
+        Route::get('audit-logs', [AuditLogController::class, 'index'])
+            ->name('audit-logs.index');
     });
