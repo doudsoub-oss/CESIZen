@@ -15,6 +15,7 @@ use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Symfony\Component\HttpFoundation\Response;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -35,6 +36,7 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureAuthentication();
         $this->configureViews();
         $this->configureRateLimiting();
+        $this->configureRouteThrottling();
     }
 
     /**
@@ -101,18 +103,77 @@ class FortifyServiceProvider extends ServiceProvider
     }
 
     /**
-     * Configure rate limiting.
+     * Configure rate limiting for authentication surfaces (traite R6).
+     *
+     * Le plafonnement est double sur la connexion : par couple (email + IP) pour
+     * contrer le bourrage depuis une adresse, ET par compte seul pour contrer un
+     * compte ciblé depuis plusieurs adresses. La réinitialisation est plafonnée
+     * par email et par IP, l'inscription par IP.
      */
     private function configureRateLimiting(): void
     {
+        RateLimiter::for('login', function (Request $request) {
+            $email = Str::lower((string) $request->input(Fortify::username()));
+            $emailAndIp = Str::transliterate($email.'|'.$request->ip());
+
+            return [
+                Limit::perMinute(5)->by($emailAndIp)->response($this->throttledResponse()),
+                Limit::perHour(10)->by('account:'.$email)->response($this->throttledResponse()),
+            ];
+        });
+
         RateLimiter::for('two-factor', function (Request $request) {
             return Limit::perMinute(5)->by($request->session()->get('login.id'));
         });
 
-        RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+        RateLimiter::for('password-reset', function (Request $request) {
+            $email = Str::lower((string) $request->input('email'));
 
-            return Limit::perMinute(5)->by($throttleKey);
+            return [
+                Limit::perHour(3)->by('pwreset-email:'.$email)->response($this->throttledResponse()),
+                Limit::perHour(10)->by('pwreset-ip:'.$request->ip())->response($this->throttledResponse()),
+            ];
         });
+
+        RateLimiter::for('register', function (Request $request) {
+            return Limit::perHour(5)->by('register-ip:'.$request->ip())->response($this->throttledResponse());
+        });
+    }
+
+    /**
+     * Attach the reset / register limiters to the routes Fortify registers
+     * itself, without editing any vendor file.
+     *
+     * Fortify loads its routes from a deferred `booted` callback registered
+     * after this provider's, so a single `booted` here would run too early. The
+     * nested `booted` is appended while the first round of callbacks is still
+     * running, so it fires *after* Fortify's route loading, once the named
+     * routes exist.
+     */
+    private function configureRouteThrottling(): void
+    {
+        $this->app->booted(function () {
+            $this->app->booted(function () {
+                $routes = $this->app['router']->getRoutes();
+
+                $routes->getByName('password.email')?->middleware('throttle:password-reset');
+                $routes->getByName('register.store')?->middleware('throttle:register');
+            });
+        });
+    }
+
+    /**
+     * Generic 429 response, in French, that never reveals whether an account
+     * exists. Reused by every authentication limiter above.
+     */
+    private function throttledResponse(): callable
+    {
+        return function (Request $request, array $headers): Response {
+            return response(
+                __('Trop de tentatives. Veuillez patienter avant de réessayer.'),
+                Response::HTTP_TOO_MANY_REQUESTS,
+                $headers,
+            );
+        };
     }
 }
