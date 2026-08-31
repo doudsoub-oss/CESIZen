@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Models\User;
 use App\Services\AuditLogger;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -25,6 +26,12 @@ class AuditAuthEvents
     public function handleLogin(Login $event): void
     {
         $this->logger->auth('auth.login', $event->user);
+
+        // Alimente la dernière connexion (base des durées de conservation, L09).
+        // saveQuietly : pas d'entrée « user.updated » à chaque connexion.
+        if ($event->user instanceof User) {
+            $event->user->forceFill(['last_login_at' => now()])->saveQuietly();
+        }
     }
 
     public function handleLogout(Logout $event): void
