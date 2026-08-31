@@ -15,6 +15,18 @@
 .env
 .env.backup
 .env.production
+.env.recette
+.env.staging
+.env.deploy
+# Secrets et clés hors dépôt (les fichiers *.example restent suivis)
+*.pem
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+acme.json
+*.p12
+*.pfx
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
@@ -38,3 +50,8 @@ docs/devPlan.md
 docs/devStatus.md
 docs/testCoverage.md
 docs/db-inspect.md
+docs/Consigne-Rendu-Final.pdf
+.agent
+rendu
+docs/Rendu-Final-Bloc-2-Individuelle-Guylain-Soubrier.pdf
+prompt.xml

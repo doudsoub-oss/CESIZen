@@ -1,0 +1,75 @@
+# =============================================================================
+# CESIZen — configuration gitleaks (détection de secrets)
+# -----------------------------------------------------------------------------
+# Étend le jeu de règles par défaut de gitleaks (ne le remplace pas) et ajoute
+# des règles propres au projet. Les faux positifs sont documentés ici, un par
+# un, plutôt que de baisser la sensibilité globale (cf. dossier 2.5 / lot L01).
+#
+# Usage :
+#   gitleaks detect  --source . --log-opts="--all"   # historique complet
+#   gitleaks protect --staged                         # avant commit (hook)
+# =============================================================================
+
+title = "CESIZen gitleaks"
+
+[extend]
+# Conserve toutes les règles intégrées (jetons cloud, clés privées, etc.).
+useDefault = true
+
+# -----------------------------------------------------------------------------
+# Règles spécifiques au projet (renfort)
+# -----------------------------------------------------------------------------
+
+[[rules]]
+id = "cesizen-laravel-app-key"
+description = "Clé applicative Laravel (APP_KEY au format base64:)"
+regex = '''base64:[A-Za-z0-9+/]{40,}={0,2}'''
+keywords = ["base64:"]
+
+[[rules]]
+id = "cesizen-postgres-url"
+description = "URL de connexion PostgreSQL contenant un identifiant"
+regex = '''(?i)postgres(?:ql)?://[^:@/\s]+:[^@/\s]+@[^/\s]+'''
+keywords = ["postgres://", "postgresql://"]
+
+[[rules]]
+id = "cesizen-db-password-assignment"
+description = "Mot de passe PostgreSQL en clair dans une affectation d'environnement"
+regex = '''(?i)DB_PASSWORD\s*=\s*['"]?[^\s'"#]{6,}['"]?'''
+keywords = ["DB_PASSWORD"]
+
+[[rules]]
+id = "cesizen-mail-password-assignment"
+description = "Mot de passe SMTP en clair dans une affectation d'environnement"
+regex = '''(?i)MAIL_PASSWORD\s*=\s*['"]?[^\s'"#]{6,}['"]?'''
+keywords = ["MAIL_PASSWORD"]
+
+[[rules]]
+id = "cesizen-backup-passphrase"
+description = "Phrase secrète de chiffrement des sauvegardes (voir L18)"
+regex = '''(?i)BACKUP_(?:GPG_)?PASSPHRASE\s*=\s*['"]?[^\s'"#]{6,}['"]?'''
+keywords = ["BACKUP_PASSPHRASE", "BACKUP_GPG_PASSPHRASE"]
+
+# -----------------------------------------------------------------------------
+# Allowlist — faux positifs documentés (ne PAS élargir sans justification)
+# -----------------------------------------------------------------------------
+[allowlist]
+description = "Exceptions documentées : gabarits d'environnement et fixtures de test"
+
+# 1) Les fichiers `.env*.example` ne contiennent que des valeurs de gabarit non
+#    exploitables (placeholders, valeurs vides). Ils sont volontairement suivis.
+paths = [
+    '''(^|/)\.env(\..*)?\.example$''',
+    '''(^|/)\.gitleaks\.toml$''',
+]
+
+# 2) Mot de passe de FIXTURE utilisé par la suite de tests
+#    (tests/Feature/Admin/Users/UserAdminTest.php). Ce n'est PAS un secret réel :
+#    c'est une donnée de test statique, sans valeur hors du contexte de test.
+#    24 occurrences détectées dans l'historique le 2026-08-31, toutes ce fixture.
+#    Les valeurs de développement Docker (identifiant `cesizen/cesizen`,
+#    dossier §6) sont couvertes par l'exception de chemin ci-dessus (fichiers
+#    `.env*.example`) : non exploitables hors du poste de développement local.
+regexes = [
+    '''Strong-pass-123''',
+]
