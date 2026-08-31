@@ -68,5 +68,6 @@ Modèle de branches, règles de protection et chaîne de traçabilité :
 - [`docs/exploitation/rotation-des-secrets.md`](docs/exploitation/rotation-des-secrets.md) — rotation des secrets (L01)
 - [`docs/securite/limitation-de-debit.md`](docs/securite/limitation-de-debit.md) — limitation de débit (L03)
 - [`docs/securite/en-tetes-securite.md`](docs/securite/en-tetes-securite.md) — transport et en-têtes de sécurité (L04)
+- [`docs/securite/cloisonnement-environnements.md`](docs/securite/cloisonnement-environnements.md) — cloisonnement des environnements (L06)
 - [`docs/docker.md`](docs/docker.md) — runbook Docker (développement)
 - [`docs/database-schema.md`](docs/database-schema.md) — schéma de base de données faisant autorité

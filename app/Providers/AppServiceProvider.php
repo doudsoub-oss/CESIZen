@@ -13,6 +13,7 @@ use App\Models\Questionnaire;
 use App\Models\ResultInterpretation;
 use App\Models\User;
 use App\Observers\AuditableObserver;
+use App\Support\EnvironmentGuard;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -37,6 +38,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        EnvironmentGuard::ensureDebugIsDisabled(
+            $this->app->environment(),
+            (bool) config('app.debug'),
+        );
+
         $this->configureDefaults();
         $this->configureAuditing();
         $this->configureSecureTransport();
