@@ -17,6 +17,8 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -37,6 +39,21 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureAuditing();
+        $this->configureSecureTransport();
+    }
+
+    /**
+     * Génère un nonce partagé avec Vite pour la CSP (voir EnTetesDeSecurite) et
+     * force la génération d'URL en HTTPS sur les environnements déployés — jamais
+     * en local ni en test, où l'application est servie en clair.
+     */
+    protected function configureSecureTransport(): void
+    {
+        Vite::useCspNonce();
+
+        if (app()->environment(['production', 'staging', 'recette'])) {
+            URL::forceScheme('https');
+        }
     }
 
     /**
