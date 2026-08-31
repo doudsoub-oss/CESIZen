@@ -117,6 +117,8 @@ return [
     'limiters' => [
         'login' => 'login',
         'two-factor' => 'two-factor',
+        // Limiteur natif de la vérification d'e-mail : 6 requêtes par minute.
+        'verification' => '6,1',
     ],
 
     /*
