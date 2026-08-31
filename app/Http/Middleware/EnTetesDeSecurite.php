@@ -57,6 +57,11 @@ class EnTetesDeSecurite
         $headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), interest-cohort=()');
 
         $headers->set($this->nomEnTeteCsp(), $this->politiqueDeContenu());
+
+        // La recette ne doit pas être indexée par les moteurs (L06, traite R10).
+        if (app()->environment('recette')) {
+            $headers->set('X-Robots-Tag', 'noindex, nofollow');
+        }
     }
 
     private function nomEnTeteCsp(): string

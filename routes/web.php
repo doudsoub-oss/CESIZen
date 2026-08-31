@@ -12,6 +12,15 @@ Route::inertia('/', 'Welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
+// Interdit l'indexation de la recette ; permissif ailleurs (L06, traite R10).
+Route::get('robots.txt', function () {
+    $rules = app()->environment('recette')
+        ? "User-agent: *\nDisallow: /\n"
+        : "User-agent: *\nDisallow:\n";
+
+    return response($rules, 200, ['Content-Type' => 'text/plain']);
+})->name('robots');
+
 /*
 |--------------------------------------------------------------------------
 | Public information module (§5.2)
