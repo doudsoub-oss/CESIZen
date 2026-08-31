@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\DataExportController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Support\Facades\Route;
@@ -9,6 +10,11 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    // Droit à la portabilité (art. 20 RGPD) — plafonné à 3 exports par jour (L07).
+    Route::get('settings/data-export', DataExportController::class)
+        ->middleware('throttle:data-export')
+        ->name('profile.data-export');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
