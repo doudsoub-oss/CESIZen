@@ -12,6 +12,10 @@ Route::inertia('/', 'Welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
+// Politique de confidentialité (L08, annexe A) — page publique.
+Route::inertia('/politique-de-confidentialite', 'public/PrivacyPolicy')
+    ->name('privacy-policy');
+
 // Interdit l'indexation de la recette ; permissif ailleurs (L06, traite R10).
 Route::get('robots.txt', function () {
     $rules = app()->environment('recette')
@@ -49,6 +53,8 @@ Route::middleware(['auth'])->group(function (): void {
         ->name('diagnostic.history');
     Route::get('diagnostic/history/{diagnostic}', [HistoryController::class, 'show'])
         ->name('diagnostic.history.show');
+    Route::delete('diagnostic/history/{diagnostic}', [HistoryController::class, 'destroy'])
+        ->name('diagnostic.history.destroy');
 });
 
 Route::get('diagnostic/{questionnaire:slug}', [DiagnosticController::class, 'show'])

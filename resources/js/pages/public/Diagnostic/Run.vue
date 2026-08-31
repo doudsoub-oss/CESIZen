@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
@@ -13,13 +13,20 @@ const props = defineProps<{
 
 const questions = computed(() => props.questionnaire.questions ?? []);
 
+const page = usePage();
+const isAuthenticated = computed(() => Boolean(page.props.auth?.user));
+
 // answers: { [questionId]: answerOptionId | null }
 const initialAnswers: Record<number, number | null> = Object.fromEntries(
     questions.value.map((q) => [q.id, null]),
 );
 
-const form = useForm<{ answers: Record<number, number | null> }>({
+const form = useForm<{
+    answers: Record<number, number | null>;
+    consent: boolean;
+}>({
     answers: initialAnswers,
+    consent: false,
 });
 
 const answeredCount = computed(
@@ -154,6 +161,26 @@ function errorFor(qid: number): string | undefined {
                     </fieldset>
                 </li>
             </ol>
+
+            <div
+                v-if="isAuthenticated"
+                class="mt-6 rounded-md border border-border bg-muted/40 p-4"
+            >
+                <label class="flex items-start gap-3 text-sm">
+                    <input
+                        type="checkbox"
+                        v-model="form.consent"
+                        class="mt-1 size-4 accent-primary"
+                    />
+                    <span>
+                        Je consens à conserver ce résultat sur mon compte. Il
+                        s'agit d'une donnée relative à ma santé (article 9 du
+                        RGPD). Sans cette case, le résultat est affiché mais non
+                        conservé. Je pourrai le supprimer à tout moment depuis
+                        mon historique.
+                    </span>
+                </label>
+            </div>
 
             <div
                 class="mt-8 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-end"
