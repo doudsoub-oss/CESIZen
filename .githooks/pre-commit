@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+#
+# Hook pre-commit — détection de secrets avant enregistrement.
+# Active-le une fois par clone :  git config core.hooksPath .githooks
+#
+# Analyse UNIQUEMENT les modifications indexées (staged) avec gitleaks et la
+# configuration du dépôt (.gitleaks.toml). Bloque le commit si un secret est
+# détecté. Si gitleaks n'est pas installé, avertit sans bloquer (l'analyse
+# reste garantie par la chaîne d'intégration, lot L13).
+#
+set -euo pipefail
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+    echo "⚠  gitleaks introuvable — analyse des secrets ignorée localement."
+    echo "   Installe-le (https://github.com/gitleaks/gitleaks) ; la CI l'exécute de toute façon."
+    exit 0
+fi
+
+echo "🔍 gitleaks : analyse des modifications indexées…"
+if ! gitleaks protect --staged --redact --no-banner --config .gitleaks.toml; then
+    echo
+    echo "✗ Commit bloqué : un secret potentiel a été détecté dans les fichiers indexés."
+    echo "  Retire le secret, puis considère-le comme compromis et fais-le tourner :"
+    echo "  docs/exploitation/rotation-des-secrets.md"
+    echo "  Faux positif ? Documente-le dans .gitleaks.toml (allowlist), ne baisse pas la sensibilité."
+    exit 1
+fi
+
+echo "✓ Aucun secret détecté."
+exit 0
