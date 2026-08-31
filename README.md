@@ -54,8 +54,16 @@ gitleaks detect --source . --log-opts="--all"
 Un faux positif se documente dans l'allowlist de `.gitleaks.toml` — on ne baisse
 jamais la sensibilité globale.
 
+## Contribuer
+
+Modèle de branches, règles de protection et chaîne de traçabilité :
+[`CONTRIBUTING.md`](CONTRIBUTING.md). Convention de commit :
+[`docs/convention-de-commit.md`](docs/convention-de-commit.md).
+
 ## Documentation
 
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — modèle de branches et de contribution (L02)
+- [`docs/convention-de-commit.md`](docs/convention-de-commit.md) — convention de commit (L02)
 - [`docs/audit-conformite-bloc3.md`](docs/audit-conformite-bloc3.md) — audit dossier ↔ code (L00)
 - [`docs/exploitation/rotation-des-secrets.md`](docs/exploitation/rotation-des-secrets.md) — rotation des secrets (L01)
 - [`docs/docker.md`](docs/docker.md) — runbook Docker (développement)
