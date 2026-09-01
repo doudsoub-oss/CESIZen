@@ -12,6 +12,12 @@ Route::inertia('/', 'Welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
+// Déclaration d'accessibilité RGAA (L10, engagement 2.6). État partiellement
+// conforme : l'audit complet n'a pas été conduit, la déclaration l'assume.
+Route::inertia('accessibilite', 'public/Accessibility', [
+    'etabliLe' => '1er septembre 2026',
+])->name('accessibility');
+
 // Interdit l'indexation de la recette ; permissif ailleurs (L06, traite R10).
 Route::get('robots.txt', function () {
     $rules = app()->environment('recette')

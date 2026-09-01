@@ -160,6 +160,8 @@ function errorFor(qid: number): string | undefined {
             >
                 <p
                     v-if="!allAnswered"
+                    role="status"
+                    aria-live="polite"
                     class="text-sm text-muted-foreground sm:mr-auto"
                 >
                     Veuillez répondre à toutes les questions ({{

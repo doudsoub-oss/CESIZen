@@ -127,6 +127,7 @@ class CESIZenSeeder extends Seeder
         // Link to the content by reference so the URL is resolved from the page itself.
         MenuItem::create(['menu_id' => $footerMenu->id, 'title' => 'Mentions légales', 'content_id' => $mentionsLegales->id, 'position' => 0]);
         MenuItem::create(['menu_id' => $footerMenu->id, 'title' => 'Informations', 'url' => '/informations', 'position' => 1]);
+        MenuItem::create(['menu_id' => $footerMenu->id, 'title' => 'Accessibilité', 'url' => '/accessibilite', 'position' => 2]);
 
         // Create stress questionnaire (PSS-10 inspired)
         $questionnaire = Questionnaire::create([
