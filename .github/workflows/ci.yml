@@ -1,0 +1,256 @@
+# Chaîne d'intégration continue (L13).
+# Reproduit une à une les neuf étapes du Tableau 19 du dossier, dans l'ordre,
+# avec leur outil et leur caractère bloquant. Les jobs sont numérotés pour que
+# la correspondance avec le dossier se lise d'un coup d'œil.
+#
+# Ordonnancement : les jobs 1 à 7 s'exécutent en parallèle ; 8 dépend de 7 ;
+# 9 dépend de 8. Le job final « chaine-verte » agrège tout et sert de
+# vérification requise unique dans les règles de protection de branche.
+#
+# Aucun secret n'est nécessaire à cette chaîne.
+name: CI
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+jobs:
+  # ── 1. Détection de secrets — BLOQUANT ─────────────────────────────────────
+  secrets:
+    name: "1. Détection de secrets"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # historique complet : gitleaks analyse tous les commits
+      - name: Installer gitleaks (binaire de release, pas l'action sous licence)
+        run: |
+          VERSION=8.21.2
+          curl -sSfL "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz" \
+            | tar -xz gitleaks
+          sudo install -m 0755 gitleaks /usr/local/bin/gitleaks
+      - name: Analyse de l'historique complet
+        run: gitleaks detect --source . --log-opts="--all" --redact --verbose
+
+  # ── 2. Style et formatage — BLOQUANT ───────────────────────────────────────
+  style:
+    name: "2. Style et formatage"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: none
+      - uses: ramsey/composer-install@v3
+      - name: Pint
+        run: ./vendor/bin/pint --test
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: ESLint
+        run: npm run lint:check
+      - name: Prettier
+        run: npm run format:check
+
+  # ── 3. Vérification des types — BLOQUANT ───────────────────────────────────
+  types:
+    name: "3. Vérification des types"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: none
+      - uses: ramsey/composer-install@v3
+      - name: Générer les types Wayfinder (requis par vue-tsc)
+        run: |
+          cp .env.example .env
+          php artisan wayfinder:generate --with-form
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: vue-tsc
+        run: npm run types:check
+
+  # ── 4. Analyse statique serveur — NON BLOQUANT (palier, voir L14) ──────────
+  static-analysis:
+    name: "4. Analyse statique serveur"
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: none
+      - uses: ramsey/composer-install@v3
+      - name: PHPStan (Larastan)
+        run: |
+          if [ -x vendor/bin/phpstan ]; then
+            ./vendor/bin/phpstan analyse
+          else
+            echo "PHPStan pas encore installé — palier prévu au L14."
+          fi
+
+  # ── 5. Tests automatisés — BLOQUANT ────────────────────────────────────────
+  tests:
+    name: "5. Tests automatisés"
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16-alpine # MÊME version qu'en production (parité, 3.2)
+        env:
+          POSTGRES_DB: cesizen_test
+          POSTGRES_USER: cesizen
+          POSTGRES_PASSWORD: cesizen
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U cesizen -d cesizen_test"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: cesizen_test
+      DB_USERNAME: cesizen
+      DB_PASSWORD: cesizen
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: pdo_pgsql, pgsql, intl, zip, bcmath, mbstring
+          coverage: none
+      - uses: ramsey/composer-install@v3
+      - name: Préparer l'environnement
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+      - name: php artisan test
+        run: php artisan test
+
+  # ── 6. Audit des dépendances — bloquant au niveau CRITIQUE uniquement ──────
+  deps-audit:
+    name: "6. Audit des dépendances"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          coverage: none
+      - uses: ramsey/composer-install@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Audit composer (bloque si critique)
+        run: |
+          # composer audit --format=json émet le rapport sur STDERR et sort en 1
+          # dès qu'un avis existe : on redirige stderr vers le fichier et on
+          # neutralise le code de sortie, la décision se prend au niveau critique.
+          composer audit --format=json > composer-audit.json 2>&1 || true
+          CRIT=$(jq '[.advisories[]?[]? | select(.severity == "critical")] | length' composer-audit.json 2>/dev/null || echo 0)
+          echo "Vulnérabilités composer critiques : ${CRIT:-0}"
+          if [ "${CRIT:-0}" -gt 0 ]; then
+            echo "::error::Vulnérabilité(s) composer de sévérité critique."
+            exit 1
+          fi
+      - name: Audit npm (bloque si critique)
+        run: |
+          npm audit --json > npm-audit.json 2>&1 || true
+          CRIT=$(jq '.metadata.vulnerabilities.critical // 0' npm-audit.json 2>/dev/null || echo 0)
+          echo "Vulnérabilités npm critiques : ${CRIT:-0}"
+          if [ "${CRIT:-0}" -gt 0 ]; then
+            echo "::error::Vulnérabilité(s) npm de sévérité critique."
+            exit 1
+          fi
+
+  # ── 7. Contrôle du fichier de construction — BLOQUANT ──────────────────────
+  dockerfile:
+    name: "7. Contrôle du fichier de construction"
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile.prod
+
+  # ── 8. Construction de l'image (linux/arm64, sans publication) — BLOQUANT ──
+  image-build:
+    name: "8. Construction de l'image"
+    runs-on: ubuntu-24.04
+    needs: dockerfile
+    steps:
+      - uses: actions/checkout@v4
+      # Si des exécuteurs « ubuntu-24.04-arm » sont disponibles pour ce dépôt,
+      # préférer une construction NATIVE (quelques minutes) et retirer QEMU.
+      # Sinon, l'émulation QEMU ci-dessous dure 15 à 20 minutes.
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.prod
+          platforms: linux/arm64
+          push: false # publication au registre : L16
+          tags: cesizen:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          outputs: type=docker,dest=/tmp/cesizen-image.tar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cesizen-image
+          path: /tmp/cesizen-image.tar
+          retention-days: 1
+
+  # ── 9. Analyse de vulnérabilités de l'image — bloquant au niveau CRITIQUE ──
+  image-scan:
+    name: "9. Analyse de vulnérabilités de l'image"
+    runs-on: ubuntu-24.04
+    needs: image-build
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: cesizen-image
+          path: /tmp
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          input: /tmp/cesizen-image.tar
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+
+  # ── Agrégat : vérification requise unique ─────────────────────────────────
+  chaine-verte:
+    name: "Chaîne verte"
+    runs-on: ubuntu-24.04
+    needs:
+      - secrets
+      - style
+      - types
+      - static-analysis
+      - tests
+      - deps-audit
+      - dockerfile
+      - image-build
+      - image-scan
+    steps:
+      - run: echo "Toute la chaîne est verte."
