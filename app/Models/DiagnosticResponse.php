@@ -17,7 +17,12 @@ class DiagnosticResponse extends Model
     protected function casts(): array
     {
         return [
-            'score' => 'integer',
+            // Chiffrés au repos (L05) : le score de la réponse et la réponse
+            // choisie elle-même. Chiffrer answer_option_id retire la jointure SQL
+            // qui reconstruirait le score (scénario R1). Les libellés de réponse
+            // se chargent ensuite via Eloquent (clés collectées en PHP).
+            'score' => 'encrypted',
+            'answer_option_id' => 'encrypted',
             'created_at' => 'datetime',
         ];
     }
