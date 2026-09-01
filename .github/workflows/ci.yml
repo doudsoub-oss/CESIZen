@@ -83,25 +83,27 @@ jobs:
       - name: vue-tsc
         run: npm run types:check
 
-  # ── 4. Analyse statique serveur — NON BLOQUANT (palier, voir L14) ──────────
+  # ── 4. Analyse statique serveur — BLOQUANT au palier courant (L14) ─────────
+  # PHPStan niveau 5 avec baseline figé : échoue sur toute NOUVELLE erreur.
+  # La garde interdit d'élargir le baseline (il ne doit que décroître).
   static-analysis:
     name: "4. Analyse statique serveur"
     runs-on: ubuntu-24.04
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # la garde compare le baseline à la branche de base
       - uses: shivammathur/setup-php@v2
         with:
           php-version: "8.4"
           coverage: none
       - uses: ramsey/composer-install@v3
-      - name: PHPStan (Larastan)
-        run: |
-          if [ -x vendor/bin/phpstan ]; then
-            ./vendor/bin/phpstan analyse
-          else
-            echo "PHPStan pas encore installé — palier prévu au L14."
-          fi
+      - name: PHPStan (Larastan) — niveau 5, baseline figé
+        run: php -d memory_limit=512M vendor/bin/phpstan analyse --no-progress
+      - name: Garde — le baseline ne doit pas croître
+        env:
+          GITHUB_EVENT_BEFORE: ${{ github.event.before }}
+        run: bash .github/scripts/phpstan-baseline-guard.sh
 
   # ── 5. Tests automatisés — BLOQUANT ────────────────────────────────────────
   tests:
