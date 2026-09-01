@@ -1,0 +1,139 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Cannot call method label\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Admin/MenuItemController.php
+
+		-
+			message: '#^Cannot call method isPast\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Information/ContentController.php
+
+		-
+			message: '#^Cannot call method isAtLeast\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Middleware/EnsureUserHasRole.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Middleware/EnsureUserHasRole.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$category\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Middleware/HandleInertiaRequests.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Middleware/HandleInertiaRequests.php
+
+		-
+			message: '#^Parameter \#1 \$items of method App\\Http\\Middleware\\HandleInertiaRequests\:\:mapItems\(\) expects iterable\<App\\Models\\MenuItem\>, Illuminate\\Database\\Eloquent\\Collection\<int, Illuminate\\Database\\Eloquent\\Model\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Middleware/HandleInertiaRequests.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>rootItems" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Middleware/HandleInertiaRequests.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$answerOptions\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Requests/Diagnostic/SubmitDiagnosticRequest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Requests/Diagnostic/SubmitDiagnosticRequest.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_required\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Requests/Diagnostic/SubmitDiagnosticRequest.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:getInterpretationForScore\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Models/Diagnostic.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$score\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/DiagnosticResponse.php
+
+		-
+			message: '#^Method App\\Models\\Questionnaire\:\:getInterpretationForScore\(\) should return App\\Models\\ResultInterpretation\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Models/Questionnaire.php
+
+		-
+			message: '#^Cannot call method isAtLeast\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between ''admin''\|''super_admin''\|''user'' and App\\Enums\\Role will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between ''admin''\|''super_admin''\|''user'' and App\\Enums\\Role\:\:SuperAdmin will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between ''admin''\|''super_admin''\|''user'' and App\\Enums\\Role\:\:SuperAdmin will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Policies/UserPolicy.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between ''admin''\|''super_admin''\|''user'' and App\\Enums\\Role\:\:SuperAdmin will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Policies/UserPolicy.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between ''admin''\|''super_admin''\|''user'' and App\\Enums\\Role\:\:User will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 2
+			path: app/Policies/UserPolicy.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$questionnaire_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/DiagnosticScoringService.php
+
+		-
+			message: '#^Method App\\Services\\DiagnosticScoringService\:\:interpretationForScore\(\) should return App\\Models\\ResultInterpretation\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/DiagnosticScoringService.php

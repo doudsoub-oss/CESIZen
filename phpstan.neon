@@ -1,0 +1,10 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+    - phpstan-baseline.neon
+
+parameters:
+    # Palier actuel (L14). Trajectoire documentée dans
+    # docs/qualite/analyse-statique.md ; le baseline ne doit que décroître.
+    level: 5
+    paths:
+        - app
