@@ -1,0 +1,170 @@
+# Composition de DÉPLOIEMENT (L12, engagement 3.1).
+# La composition de développement (docker-compose.yml, Tableau 3) n'est pas modifiée.
+#
+# Quatre transformations par rapport au Tableau 3 :
+#   1. le service « node » disparaît (assets compilés dans l'image, L11) ;
+#   2. « mailpit » cède la place à une messagerie SMTP réelle (via variables) ;
+#   3. un proxy d'entrée « traefik » est ajouté ;
+#   4. un service « backup » de sauvegarde planifiée est introduit (corps au L18).
+# De plus : la base de données ne publie AUCUN port sur l'hôte.
+name: cesizen
+
+services:
+  # ── Proxy d'entrée ───────────────────────────────────────────────────────
+  # Seul service publiant des ports sur l'hôte : 80 et 443, rien d'autre.
+  traefik:
+    image: traefik:v3
+    restart: unless-stopped
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Redirection permanente 80 → 443.
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+      # Let's Encrypt, défi HTTP, stockage sur volume nommé (acme.json en 600,
+      # permissions posées par Traefik lui-même).
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/acme/acme.json"
+      # Tableau de bord désactivé.
+      - "--api.dashboard=false"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-acme:/acme
+    networks:
+      - cesizen
+
+  # ── Serveur web (relais vers php-fpm) ────────────────────────────────────
+  # Configuration nginx existante conservée. Aucun port publié : l'exposition
+  # se fait uniquement par étiquettes Traefik.
+  web:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - app
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      # Assets statiques (public/, dont public/build) partagés depuis l'image app.
+      - cesizen-public:/var/www/html/public:ro
+    labels:
+      # Forme « map » : permet à compose.recette.yml de fusionner par clé.
+      traefik.enable: "true"
+      traefik.docker.network: "cesizen_cesizen"
+      traefik.http.routers.cesizen.rule: "Host(`${APP_DOMAIN}`)"
+      traefik.http.routers.cesizen.entrypoints: "websecure"
+      traefik.http.routers.cesizen.tls: "true"
+      traefik.http.routers.cesizen.tls.certresolver: "letsencrypt"
+      traefik.http.services.cesizen.loadbalancer.server.port: "80"
+      # Intergiciel d'en-têtes de sécurité — EN COMPLÉMENT du middleware
+      # applicatif du L04, pas en remplacement.
+      traefik.http.middlewares.sec-headers.headers.stsSeconds: "31536000"
+      traefik.http.middlewares.sec-headers.headers.stsIncludeSubdomains: "true"
+      traefik.http.middlewares.sec-headers.headers.stsPreload: "true"
+      traefik.http.middlewares.sec-headers.headers.contentTypeNosniff: "true"
+      traefik.http.middlewares.sec-headers.headers.frameDeny: "true"
+      traefik.http.middlewares.sec-headers.headers.referrerPolicy: "strict-origin-when-cross-origin"
+      traefik.http.routers.cesizen.middlewares: "sec-headers"
+    networks:
+      - cesizen
+
+  # ── Application (php-fpm) ────────────────────────────────────────────────
+  # Image issue du registre, JAMAIS construite sur le serveur.
+  app:
+    image: "${IMAGE_REGISTRY:-ghcr.io/doudsoub-oss/cesizen}:${IMAGE_TAG:-latest}"
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      # Publie public/ (initialisé depuis l'image) vers le volume partagé lu par web.
+      - cesizen-public:/var/www/html/public
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@stream_socket_client('tcp://127.0.0.1:9000', $$e, $$s, 1) ? 0 : 1);"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+    networks:
+      - cesizen
+
+  # ── File d'attente ───────────────────────────────────────────────────────
+  queue:
+    image: "${IMAGE_REGISTRY:-ghcr.io/doudsoub-oss/cesizen}:${IMAGE_TAG:-latest}"
+    restart: unless-stopped
+    env_file:
+      - .env
+    command: php artisan queue:work --tries=3 --max-time=3600
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - cesizen
+
+  # ── Planificateur ────────────────────────────────────────────────────────
+  # Indispensable aux purges du L09 (préavis, purge des inactifs, purge journal).
+  scheduler:
+    image: "${IMAGE_REGISTRY:-ghcr.io/doudsoub-oss/cesizen}:${IMAGE_TAG:-latest}"
+    restart: unless-stopped
+    env_file:
+      - .env
+    command: php artisan schedule:work
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - cesizen
+
+  # ── Base de données ──────────────────────────────────────────────────────
+  # AUCUNE section « ports » : la base n'est joignable que sur le réseau interne.
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - cesizen-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - cesizen
+
+  # ── Sauvegarde planifiée (squelette — corps au L18) ──────────────────────
+  # Image postgres:16-alpine : fournit pg_dump à la MÊME version que la base.
+  backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - cesizen-backups:/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    # Corps réel (dump planifié + rétention) implémenté au L18.
+    entrypoint: ["sh", "-c", "echo '[backup] squelette L12 — corps implémenté au L18'; sleep infinity"]
+    networks:
+      - cesizen
+
+volumes:
+  cesizen-pgdata:
+  cesizen-public:
+  cesizen-backups:
+  traefik-acme:
+
+networks:
+  cesizen:
+    driver: bridge
