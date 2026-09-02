@@ -4,6 +4,7 @@ import { Menu as MenuIcon, ShieldCheck } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import BackButton from '@/components/BackButton.vue';
+import CookieBanner from '@/components/CookieBanner.vue';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -177,10 +178,15 @@ const activeStyles = 'text-foreground font-semibold';
                     santé et de la prévention
                 </p>
                 <nav
-                    v-if="navigation.footer.length"
                     class="flex flex-wrap gap-x-4 gap-y-2"
                     aria-label="Liens secondaires"
                 >
+                    <Link
+                        href="/politique-de-confidentialite"
+                        class="hover:text-foreground hover:underline"
+                    >
+                        Politique de confidentialité
+                    </Link>
                     <Link
                         v-for="item in navigation.footer"
                         :key="item.id"
@@ -192,5 +198,7 @@ const activeStyles = 'text-foreground font-semibold';
                 </nav>
             </div>
         </footer>
+
+        <CookieBanner />
     </div>
 </template>

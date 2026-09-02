@@ -23,6 +23,10 @@ class CreateNewUser implements CreatesNewUsers
         Validator::make($input, [
             ...$this->profileRules(),
             'password' => $this->passwordRules(),
+            // Acceptation de la politique de confidentialité, horodatée (L08).
+            'privacy' => ['accepted'],
+        ], [
+            'privacy.accepted' => __('Vous devez accepter la politique de confidentialité.'),
         ])->validate();
 
         // Set role/active explicitly so the freshly-created in-memory instance
@@ -35,6 +39,7 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $input['password'],
             'role' => Role::User,
             'is_active' => true,
+            'privacy_accepted_at' => now(),
         ]);
     }
 }
