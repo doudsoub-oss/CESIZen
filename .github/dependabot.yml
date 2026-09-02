@@ -1,0 +1,61 @@
+# Robot de mise à jour des dépendances (L22, Tableau 27 du dossier).
+# Quatre écosystèmes, rythme hebdomadaire, mises à jour mineures et correctives
+# groupées, étiquette type:dette appliquée automatiquement, 5 PR ouvertes max.
+version: 2
+updates:
+  - package-ecosystem: composer
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: ["type:dette"]
+    groups:
+      mineures-et-correctives:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: ["type:dette"]
+    groups:
+      mineures-et-correctives:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  # Image de production à la racine (Dockerfile.prod).
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: ["type:dette"]
+    groups:
+      mineures-et-correctives:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  # Image de développement (docker/Dockerfile).
+  - package-ecosystem: docker
+    directory: "/docker"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: ["type:dette"]
+    groups:
+      mineures-et-correctives:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: ["type:dette"]
+    groups:
+      mineures-et-correctives:
+        patterns: ["*"]
+        update-types: ["minor", "patch"]
