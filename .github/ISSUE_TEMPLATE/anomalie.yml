@@ -1,0 +1,83 @@
+name: Anomalie
+description: Signaler un dysfonctionnement de l'application CESIZen.
+title: "[anomalie] "
+labels: ["type:anomalie"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci de décrire l'anomalie précisément : plus le signalement est complet,
+        plus la qualification et la correction sont rapides.
+  - type: dropdown
+    id: environnement
+    attributes:
+      label: Environnement concerné
+      options:
+        - développement
+        - recette
+        - production
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version en cours d'exécution
+      placeholder: "ex. v1.2.3 ou sha-abc1234"
+    validations:
+      required: true
+  - type: dropdown
+    id: severite
+    attributes:
+      label: Sévérité proposée
+      options:
+        - bloquant
+        - majeur
+        - mineur
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Étapes de reproduction
+      description: Une étape par ligne, numérotées.
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: attendu
+    attributes:
+      label: Résultat attendu
+    validations:
+      required: true
+  - type: textarea
+    id: constate
+    attributes:
+      label: Résultat constaté
+    validations:
+      required: true
+  - type: dropdown
+    id: frequence
+    attributes:
+      label: Fréquence
+      options:
+        - systématique
+        - intermittente
+    validations:
+      required: true
+  - type: textarea
+    id: contournement
+    attributes:
+      label: Contournement connu
+      description: Facultatif.
+    validations:
+      required: false
+  - type: textarea
+    id: traces
+    attributes:
+      label: Captures ou traces d'exécution
+      description: Facultatif. Ne collez aucun secret (jeton, mot de passe, clé).
+    validations:
+      required: false
