@@ -1,0 +1,23 @@
+# Génération automatique des notes de version (L23, dossier 3.3).
+# Les correctifs de SÉCURITÉ figurent EN TÊTE, comme l'exige le 3.3. Les
+# catégories s'appuient sur les étiquettes définies au L21.
+changelog:
+  categories:
+    - title: 🔒 Correctifs de sécurité
+      labels:
+        - "securite:S1"
+        - "securite:S2"
+        - "securite:S3"
+    - title: 🐛 Corrections d'anomalies
+      labels:
+        - "type:anomalie"
+        - "type:incident"
+    - title: ✨ Évolutions
+      labels:
+        - "type:evolution"
+    - title: 🧹 Dette technique et dépendances
+      labels:
+        - "type:dette"
+    - title: Autres changements
+      labels:
+        - "*"
