@@ -1,0 +1,25 @@
+# Surcouche RECETTE (L12).
+# Usage : docker compose -f compose.prod.yml -f compose.recette.yml ...
+#
+# Deux différences avec la production (Tableau 16) :
+#   1. tout le site est protégé par une authentification basique au niveau du
+#      proxy — accès réservé aux recetteurs du Ministère ;
+#   2. la sauvegarde est quotidienne et LOCALE (non externalisée) — le Tableau 16
+#      réserve l'externalisation à la production.
+name: cesizen
+
+services:
+  web:
+    labels:
+      # Intergiciel basicAuth ; identifiants (htpasswd/bcrypt) via variable,
+      # jamais en dur. Fusionne avec les labels de base (forme « map »).
+      traefik.http.middlewares.recette-auth.basicauth.users: "${RECETTE_BASICAUTH}"
+      # La chaîne d'intergiciels reprend les en-têtes de sécurité ET l'auth.
+      traefik.http.routers.cesizen.middlewares: "sec-headers,recette-auth"
+
+  backup:
+    environment:
+      # Sauvegarde locale uniquement en recette (pas d'externalisation).
+      # Consommé par le corps du service au L18.
+      BACKUP_EXTERNALIZE: "false"
+      BACKUP_SCHEDULE: "daily"
