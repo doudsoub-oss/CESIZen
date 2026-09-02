@@ -66,8 +66,11 @@ Modèle de branches, règles de protection et chaîne de traçabilité :
 - [`docs/convention-de-commit.md`](docs/convention-de-commit.md) — convention de commit (L02)
 - [`docs/audit-conformite-bloc3.md`](docs/audit-conformite-bloc3.md) — audit dossier ↔ code (L00)
 - [`docs/exploitation/rotation-des-secrets.md`](docs/exploitation/rotation-des-secrets.md) — rotation des secrets (L01)
+- [`docs/exploitation/durees-de-conservation.md`](docs/exploitation/durees-de-conservation.md) — durées de conservation et purges (L09)
 - [`docs/securite/limitation-de-debit.md`](docs/securite/limitation-de-debit.md) — limitation de débit (L03)
 - [`docs/securite/en-tetes-securite.md`](docs/securite/en-tetes-securite.md) — transport et en-têtes de sécurité (L04)
 - [`docs/securite/cloisonnement-environnements.md`](docs/securite/cloisonnement-environnements.md) — cloisonnement des environnements (L06)
+- [`docs/etude-chiffrement-diagnostics.md`](docs/etude-chiffrement-diagnostics.md) — étude préalable au chiffrement (L05a)
+- [`docs/adr/0002-chiffrement-des-resultats-de-diagnostic.md`](docs/adr/0002-chiffrement-des-resultats-de-diagnostic.md) — ADR chiffrement des diagnostics (L05c)
 - [`docs/docker.md`](docs/docker.md) — runbook Docker (développement)
 - [`docs/database-schema.md`](docs/database-schema.md) — schéma de base de données faisant autorité
