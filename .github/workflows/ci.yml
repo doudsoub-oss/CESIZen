@@ -55,6 +55,10 @@ jobs:
           node-version: "22"
           cache: npm
       - run: npm ci
+      - name: Générer les types Wayfinder (requis par la règle import/order)
+        run: |
+          cp .env.example .env
+          php artisan wayfinder:generate --with-form
       - name: ESLint
         run: npm run lint:check
       - name: Prettier
@@ -233,12 +237,17 @@ jobs:
         with:
           name: cesizen-image
           path: /tmp
-      - uses: aquasecurity/trivy-action@0.28.0
-        with:
-          input: /tmp/cesizen-image.tar
-          severity: CRITICAL
-          ignore-unfixed: true
-          exit-code: "1"
+      - name: Installer trivy (binaire de release, comme gitleaks au job 1)
+        run: |
+          VERSION=0.58.1
+          curl -sSfL "https://github.com/aquasecurity/trivy/releases/download/v${VERSION}/trivy_${VERSION}_Linux-64bit.tar.gz" \
+            | tar -xz trivy
+          sudo install -m 0755 trivy /usr/local/bin/trivy
+      - name: Analyse de l'image (CRITICAL, corrigeables uniquement)
+        run: |
+          trivy image --input /tmp/cesizen-image.tar \
+            --severity CRITICAL --ignore-unfixed --scanners vuln \
+            --exit-code 1 --no-progress
 
   # ── Agrégat : vérification requise unique ─────────────────────────────────
   chaine-verte:
