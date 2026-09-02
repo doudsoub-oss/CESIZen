@@ -237,17 +237,16 @@ jobs:
         with:
           name: cesizen-image
           path: /tmp
-      - name: Installer trivy (binaire de release, comme gitleaks au job 1)
-        run: |
-          VERSION=0.58.1
-          curl -sSfL "https://github.com/aquasecurity/trivy/releases/download/v${VERSION}/trivy_${VERSION}_Linux-64bit.tar.gz" \
-            | tar -xz trivy
-          sudo install -m 0755 trivy /usr/local/bin/trivy
+      # L'action télécharge elle-même le binaire trivy adapté (évite le nommage
+      # d'archive manuel). Version d'action épinglée à un tag existant.
       - name: Analyse de l'image (CRITICAL, corrigeables uniquement)
-        run: |
-          trivy image --input /tmp/cesizen-image.tar \
-            --severity CRITICAL --ignore-unfixed --scanners vuln \
-            --exit-code 1 --no-progress
+        uses: aquasecurity/trivy-action@v0.33.1
+        with:
+          input: /tmp/cesizen-image.tar
+          scanners: vuln
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
 
   # ── Agrégat : vérification requise unique ─────────────────────────────────
   chaine-verte:
