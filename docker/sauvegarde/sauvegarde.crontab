@@ -2,3 +2,5 @@
 # Quotidienne à 02h30 (heure du conteneur). La cible horaire de production
 # (§ dossier) s'obtient en ajoutant des lignes ; garder au moins la quotidienne.
 30 2 * * * /usr/local/bin/sauvegarder.sh >> /backups/journal.log 2>&1
+# Sonde locale horaire (L20) : fraîcheur des sauvegardes + espace disque → Kuma.
+0 * * * * /usr/local/bin/sonde-locale.sh >> /backups/journal.log 2>&1
