@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { edit } from '@/routes/profile';
+import { dataExport, edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
 import type { BreadcrumbItem } from '@/types';
 
@@ -123,6 +123,23 @@ const user = computed(() => page.props.auth.user);
                         </Transition>
                     </div>
                 </Form>
+            </div>
+
+            <div class="flex flex-col space-y-6">
+                <Heading
+                    variant="small"
+                    title="Mes données"
+                    description="Télécharger une copie de vos données personnelles au format JSON (droit à la portabilité, article 20 du RGPD)."
+                />
+
+                <div>
+                    <a
+                        :href="dataExport.url()"
+                        class="inline-flex h-9 items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-xs transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
+                    >
+                        Télécharger mes données
+                    </a>
+                </div>
             </div>
 
             <DeleteUser />
