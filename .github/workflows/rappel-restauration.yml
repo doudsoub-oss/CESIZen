@@ -1,0 +1,44 @@
+# Rappel mensuel — test de restauration (L19).
+#
+# Un plan de continuité non éprouvé n'offre aucune garantie (dossier 2.8). Ce
+# workflow ouvre chaque mois un ticket rappelant d'exécuter tester-restauration.sh
+# et de consigner la ligne dans docs/exploitation/registre-restaurations.md.
+# Déclenchable aussi à la demande (workflow_dispatch).
+
+name: Rappel test de restauration
+
+on:
+  schedule:
+    - cron: "0 8 1 * *" # le 1er de chaque mois à 08h00 UTC
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+jobs:
+  ouvrir-rappel:
+    name: Ouvrir le ticket de rappel mensuel
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Créer le ticket
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          MOIS="$(date +%Y-%m)"
+          printf '%s\n' \
+            "Exercice mensuel de restauration éprouvée (L19, engagement 2.8)." \
+            "" \
+            "À faire :" \
+            "1. Exécuter ./tester-restauration.sh (base jetable, restauration de la" \
+            "   dernière sauvegarde, contrôles d'intégrité dont le déchiffrement d'un" \
+            "   diagnostic, chronométrage, destruction de la base jetable)." \
+            "2. Vérifier que la ligne a bien été ajoutée à" \
+            "   docs/exploitation/registre-restaurations.md et la commiter." \
+            "3. Comparer la durée constatée à la DIMA de 24 h." \
+            "" \
+            "Refermer ce ticket une fois la ligne du registre commitée." \
+            > /tmp/corps-rappel.md
+          gh issue create \
+            --title "Test de restauration mensuel — ${MOIS}" \
+            --body-file /tmp/corps-rappel.md
