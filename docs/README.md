@@ -4,6 +4,12 @@
 > index recense la documentation ajoutée par le plan de mise en conformité
 > (sécurité, déploiement, exploitation, maintenance).
 
+## Traçabilité (soutenance)
+
+- [tracabilite-bloc3.md](tracabilite-bloc3.md) — **matrice dossier ↔ dépôt** :
+  chaque engagement relié à sa preuve vérifiable, écarts assumés en tête (L25).
+- [audit-conformite-bloc3.md](audit-conformite-bloc3.md) — audit initial dossier ↔ code (L00).
+
 ## Décisions d'architecture (`adr/`)
 
 Le *pourquoi* de chaque choix structurant. Voir [`adr/0000-modele.md`](adr/0000-modele.md).
