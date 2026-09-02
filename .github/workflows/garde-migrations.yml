@@ -1,0 +1,49 @@
+# Garde migrations (L16).
+#
+# Rappel non bloquant de la règle expansion/contraction. Toute demande de fusion
+# qui modifie database/migrations/ en y introduisant un dropColumn ou un
+# renameColumn produit un AVERTISSEMENT (annotation), jamais un échec : une
+# migration destructive n'est pas interdite, mais elle doit être scindée en
+# expansion puis contraction sur deux versions, pour que le retour arrière du
+# code (L16) reste possible sans toucher au schéma.
+#
+# Voir docs/exploitation/regle-expansion-contraction.md.
+
+name: Garde migrations
+
+on:
+  pull_request:
+    paths:
+      - "database/migrations/**"
+
+permissions:
+  contents: read
+
+jobs:
+  regle-expansion-contraction:
+    name: Règle expansion/contraction
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # nécessaire pour comparer à la branche de base
+      - name: Détecter les migrations destructives
+        run: |
+          BASE="origin/${{ github.base_ref }}"
+          git fetch origin "${{ github.base_ref }}" --depth=1 >/dev/null 2>&1 || true
+
+          FICHIERS=$(git diff --name-only "$BASE"...HEAD -- database/migrations/ 2>/dev/null || true)
+          TOUCHE=0
+          for f in $FICHIERS; do
+            [ -f "$f" ] || continue
+            if grep -Eq 'dropColumn|renameColumn' "$f"; then
+              echo "::warning file=$f::Migration destructive détectée (dropColumn/renameColumn). Appliquer la règle expansion/contraction — voir docs/exploitation/regle-expansion-contraction.md avant de fusionner."
+              TOUCHE=1
+            fi
+          done
+
+          if [ "$TOUCHE" -eq 0 ]; then
+            echo "Aucune migration destructive détectée dans cette demande de fusion."
+          fi
+          # Avertissement seulement : jamais bloquant.
+          exit 0

@@ -1,0 +1,81 @@
+# Retour arrière (L16).
+#
+# Redéploie une étiquette d'image ANTÉRIEURE, déjà publiée au registre. C'est
+# l'opération de quelques minutes annoncée par le dossier : on ne reconstruit
+# rien, on ne rejoue rien — on repointe les services sur une image connue.
+#
+# IL NE REJOUE PAS LES MIGRATIONS EN SENS INVERSE. C'est précisément pourquoi le
+# dossier impose la règle expansion/contraction (voir
+# docs/exploitation/regle-expansion-contraction.md) : le schéma de base doit
+# rester compatible avec la version précédente du code, sinon un retour arrière
+# du code seul casserait l'application. Un retour arrière de schéma se décide à
+# froid et se traite comme une migration avant, jamais ici.
+#
+# Secrets : mêmes que le déploiement, dans l'environnement GitHub « recette ».
+
+name: Retour arrière
+
+on:
+  workflow_dispatch:
+    inputs:
+      etiquette:
+        description: "Étiquette d'image à rétablir (ex. sha-abc1234, ou recette)"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploiement-recette # partagé avec le déploiement : jamais en parallèle
+  cancel-in-progress: false
+
+jobs:
+  retablir:
+    name: Rétablir l'étiquette ${{ inputs.etiquette }}
+    runs-on: ubuntu-24.04
+    environment: recette
+    env:
+      DEPLOY_PATH: ${{ vars.RECETTE_DEPLOY_PATH || '/srv/cesizen' }}
+      COMPOSE: -f compose.prod.yml -f compose.recette.yml
+    steps:
+      - name: Calculer la référence de l'image
+        run: echo "IMAGE_REF=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Configurer l'accès SSH de déploiement
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "${{ secrets.RECETTE_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.RECETTE_SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Récupérer l'image demandée
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.RECETTE_SSH_USER }}@${{ secrets.RECETTE_SSH_HOST }}" \
+            "cd '$DEPLOY_PATH' && CESIZEN_IMAGE='$IMAGE_REF:${{ inputs.etiquette }}' docker compose $COMPOSE pull"
+
+      - name: Basculer les services sur l'étiquette rétablie (SANS migration)
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.RECETTE_SSH_USER }}@${{ secrets.RECETTE_SSH_HOST }}" \
+            "cd '$DEPLOY_PATH' && CESIZEN_IMAGE='$IMAGE_REF:${{ inputs.etiquette }}' docker compose $COMPOSE up -d"
+
+      - name: Nettoyer les images orphelines
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.RECETTE_SSH_USER }}@${{ secrets.RECETTE_SSH_HOST }}" \
+            "docker image prune -f"
+
+      - name: Contrôle de santé (https://<domaine>/up, 60 s)
+        run: |
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "https://${{ secrets.RECETTE_DOMAIN }}/up" || true)
+            if [ "$code" = "200" ]; then
+              echo "Contrôle de santé OK après retour arrière (tentative $i)."
+              exit 0
+            fi
+            echo "Tentative $i : code $code — nouvelle tentative dans 5 s."
+            sleep 5
+          done
+          echo "::error::Contrôle de santé en échec après 60 s (retour arrière)."
+          ssh -i ~/.ssh/deploy_key "${{ secrets.RECETTE_SSH_USER }}@${{ secrets.RECETTE_SSH_HOST }}" \
+            "cd '$DEPLOY_PATH' && docker compose $COMPOSE logs --tail=100 app" || true
+          exit 1

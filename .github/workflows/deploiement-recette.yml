@@ -1,0 +1,149 @@
+# Déploiement en recette (L16).
+#
+# Reproduit exactement la séquence du §3.4 du dossier : construction de l'image
+# sur les exécuteurs de la forge (jamais sur le serveur cible), publication au
+# registre sous double étiquette, puis connexion à l'instance, récupération de
+# l'image, migrations, bascule des services et contrôle de santé.
+#
+# Déclenchement : à la RÉUSSITE COMPLÈTE de la chaîne d'intégration (workflow
+# « CI ») sur la branche dev — c'est-à-dire à la fusion sur dev. Le déploiement
+# ne part jamais si un seul maillon de la chaîne est rouge.
+#
+# Secrets — dans l'environnement GitHub « recette » et NULLE PART AILLEURS :
+#   RECETTE_SSH_HOST  : hôte de l'instance de recette
+#   RECETTE_SSH_USER  : compte de déploiement (distinct de l'administration, L15)
+#   RECETTE_SSH_KEY   : clé privée de déploiement dédiée (L15, étape 7)
+#   RECETTE_DOMAIN    : domaine de recette (contrôle de santé HTTPS)
+# GitHub masque automatiquement ces valeurs dans les journaux d'exécution.
+#
+# Variable d'environnement (facultative) : RECETTE_DEPLOY_PATH — répertoire de
+# déploiement sur l'instance (par défaut /srv/cesizen). Il contient les fichiers
+# de composition (L12) et le .env de recette en 600 (L15), déposés hors dépôt.
+#
+# Prérequis d'instance (provisionnement L15) : le compte de déploiement doit
+# pouvoir récupérer l'image depuis ghcr.io. Si le paquet est privé, connecter
+# l'instance une fois pour toutes (docker login ghcr.io avec un jeton en LECTURE
+# seule) ; si le paquet est public, aucune authentification n'est requise.
+
+name: Déploiement recette
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: read
+  packages: write # publication de l'image au registre ghcr.io
+
+concurrency:
+  group: deploiement-recette
+  cancel-in-progress: false
+
+jobs:
+  deployer:
+    name: Construire, publier et déployer en recette
+    runs-on: ubuntu-24.04
+    # Ne se déclenche qu'à la réussite complète de la CI, sur dev, sur un push
+    # (fusion) — pas sur les exécutions de pull request.
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'dev' &&
+      github.event.workflow_run.event == 'push'
+    environment: recette
+    env:
+      DEPLOY_PATH: ${{ vars.RECETTE_DEPLOY_PATH || '/srv/cesizen' }}
+      COMPOSE: -f compose.prod.yml -f compose.recette.yml
+    steps:
+      # Se placer EXACTEMENT sur le commit validé par la CI : l'image déployée
+      # est celle qui a été testée, pas un état ultérieur de la branche.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Calculer la référence et les étiquettes de l'image
+        run: |
+          echo "IMAGE_REF=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+          echo "IMAGE_SHA=sha-$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+
+      # ── 1. Construction linux/arm64 sur la forge (jamais sur le serveur) ────
+      # Si des exécuteurs « ubuntu-24.04-arm » sont disponibles, préférer une
+      # construction native et retirer QEMU (voir la même note dans ci.yml).
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Connexion au registre ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 2. Publication au registre sous DOUBLE ÉTIQUETTE ───────────────────
+      - name: Construire et publier (sha-<commit> + recette)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.prod
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE_REF }}:${{ env.IMAGE_SHA }}
+            ${{ env.IMAGE_REF }}:recette
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ── 3. Accès SSH à l'instance (clé depuis l'environnement « recette ») ──
+      - name: Configurer l'accès SSH de déploiement
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "${{ secrets.RECETTE_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # La sortie de ssh-keyscan contient l'hôte (secret masqué) ; on l'écrit
+          # dans known_hosts sans la faire transiter par les journaux.
+          ssh-keyscan -H "${{ secrets.RECETTE_SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      # ── 4a. Récupération de l'image sur l'instance ─────────────────────────
+      - name: Récupérer l'image sur l'instance
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.RECETTE_SSH_USER }}@${{ secrets.RECETTE_SSH_HOST }}" \
+            "cd '$DEPLOY_PATH' && CESIZEN_IMAGE='$IMAGE_REF:$IMAGE_SHA' docker compose $COMPOSE pull"
+
+      # ── 4b. Migrations — ÉTAPE EXPLICITE ET DISTINCTE (§3.4) ───────────────
+      # Conteneur éphémère bâti sur l'image tout juste récupérée.
+      - name: Appliquer les migrations (php artisan migrate --force)
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.RECETTE_SSH_USER }}@${{ secrets.RECETTE_SSH_HOST }}" \
+            "cd '$DEPLOY_PATH' && CESIZEN_IMAGE='$IMAGE_REF:$IMAGE_SHA' docker compose $COMPOSE run --rm app php artisan migrate --force"
+
+      # ── 4c. Bascule des services ───────────────────────────────────────────
+      - name: Basculer les services (docker compose up -d)
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.RECETTE_SSH_USER }}@${{ secrets.RECETTE_SSH_HOST }}" \
+            "cd '$DEPLOY_PATH' && CESIZEN_IMAGE='$IMAGE_REF:$IMAGE_SHA' docker compose $COMPOSE up -d"
+
+      # ── 4d. Nettoyage des images orphelines ────────────────────────────────
+      - name: Nettoyer les images orphelines
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.RECETTE_SSH_USER }}@${{ secrets.RECETTE_SSH_HOST }}" \
+            "docker image prune -f"
+
+      # ── 5. Contrôle de santé : /up en réessayant pendant 60 s ──────────────
+      - name: Contrôle de santé (https://<domaine>/up, 60 s)
+        run: |
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "https://${{ secrets.RECETTE_DOMAIN }}/up" || true)
+            if [ "$code" = "200" ]; then
+              echo "Contrôle de santé OK (tentative $i)."
+              exit 0
+            fi
+            echo "Tentative $i : code $code — nouvelle tentative dans 5 s."
+            sleep 5
+          done
+          echo "::error::Contrôle de santé en échec après 60 s."
+          # Journaux du conteneur en sortie, pour diagnostic.
+          ssh -i ~/.ssh/deploy_key "${{ secrets.RECETTE_SSH_USER }}@${{ secrets.RECETTE_SSH_HOST }}" \
+            "cd '$DEPLOY_PATH' && docker compose $COMPOSE logs --tail=100 app" || true
+          exit 1
