@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Listeners\AuditAuthEvents;
+use App\Listeners\VerifierAccesBaseDeDonnees;
 use App\Models\AnswerOption;
 use App\Models\Category;
 use App\Models\Content;
@@ -15,6 +16,7 @@ use App\Models\User;
 use App\Observers\AuditableObserver;
 use App\Support\EnvironmentGuard;
 use Carbon\CarbonImmutable;
+use Illuminate\Foundation\Events\DiagnosingHealth;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -85,6 +87,9 @@ class AppServiceProvider extends ServiceProvider
         }
 
         Event::subscribe(AuditAuthEvents::class);
+
+        // Le point de santé /up vérifie réellement l'accès à la base (L20).
+        Event::listen(DiagnosingHealth::class, VerifierAccesBaseDeDonnees::class);
     }
 
     /**

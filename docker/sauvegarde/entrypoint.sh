@@ -12,8 +12,9 @@
 set -eu
 
 # Outils requis, installés une seule fois par cycle de vie du conteneur.
-if ! command -v gpg >/dev/null 2>&1 || ! command -v rclone >/dev/null 2>&1; then
-    apk add --no-cache gnupg rclone >/dev/null
+# curl : signalement de la sonde locale à Uptime Kuma (L20).
+if ! command -v gpg >/dev/null 2>&1 || ! command -v rclone >/dev/null 2>&1 || ! command -v curl >/dev/null 2>&1; then
+    apk add --no-cache gnupg rclone curl >/dev/null
 fi
 
 # Exécution ponctuelle (ex. vérification avant migration) : on exécute et on sort.

@@ -158,6 +158,8 @@ services:
       - ./docker/sauvegarde/entrypoint.sh:/usr/local/bin/entrypoint:ro
       - ./docker/sauvegarde/sauvegarder.sh:/usr/local/bin/sauvegarder.sh:ro
       - ./docker/sauvegarde/sauvegarde.crontab:/usr/local/bin/sauvegarde.crontab:ro
+      # Sonde locale (L20) : fraîcheur des sauvegardes + espace disque → push Kuma.
+      - ./docker/supervision/sonde-locale.sh:/usr/local/bin/sonde-locale.sh:ro
     depends_on:
       db:
         condition: service_healthy
@@ -165,10 +167,28 @@ services:
     networks:
       - cesizen
 
+  # ── Sonde de disponibilité (L20, annexe C.5) ─────────────────────────────
+  # Uptime Kuma : empreinte négligeable, notifications multicanal, mise en service
+  # en quelques minutes. Retenu par l'annexe C.5 EN LIEU ET PLACE de
+  # Prometheus/Grafana, écartés comme disproportionnés à ce stade. Surveille les
+  # URL publiques (accueil, /up, expiration du certificat TLS) et reçoit les
+  # « push » de la sonde locale (fraîcheur des sauvegardes, espace disque).
+  # Interface exposée sur la BOUCLE LOCALE uniquement (accès par tunnel SSH).
+  supervision:
+    image: louislam/uptime-kuma:1
+    restart: unless-stopped
+    volumes:
+      - cesizen-uptime:/app/data
+    ports:
+      - "127.0.0.1:3001:3001"
+    networks:
+      - cesizen
+
 volumes:
   cesizen-pgdata:
   cesizen-public:
   cesizen-backups:
+  cesizen-uptime:
   traefik-acme:
 
 networks:
