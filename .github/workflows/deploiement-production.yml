@@ -1,0 +1,155 @@
+# Déploiement en production — FOURNI EN CIBLE (L17).
+#
+# ┌────────────────────────────────────────────────────────────────────────┐
+# │ La mise en service de la production relève d'une DÉCISION DU MINISTÈRE   │
+# │ (Tableau 16 du dossier). Ce workflow décrit la chaîne cible ; il n'est   │
+# │ PAS opérationnel et ne simule aucun déploiement de production.           │
+# │                                                                          │
+# │ Deux garde-fous rendent cette honnêteté effective :                      │
+# │   1. L'environnement GitHub « production » exige une APPROBATION MANUELLE │
+# │      (règle de protection « required reviewers ») — rien ne part sans un  │
+# │      accord humain explicite.                                            │
+# │   2. L'environnement « production » n'est PAS approvisionné en secrets :  │
+# │      sans PRODUCTION_SSH_*, les étapes de déploiement ne peuvent aboutir. │
+# └────────────────────────────────────────────────────────────────────────┘
+#
+# Séquence identique au déploiement de recette (§3.4), avec les différences du
+# §3.5 : sauvegarde vérifiée AVANT migration, double étiquette sémantique,
+# publication de la note de version.
+#
+# Secrets attendus (à n'approvisionner QUE le jour d'une mise en service décidée
+# par le Ministère), dans l'environnement GitHub « production » :
+#   PRODUCTION_SSH_HOST / PRODUCTION_SSH_USER / PRODUCTION_SSH_KEY / PRODUCTION_DOMAIN
+#
+# Composition cible : compose.prod.yml + compose.production.yml (l'overlay de
+# production, à finaliser lors de la mise en service — sauvegardes 3-2-1
+# externalisées, cf. L18).
+
+name: Déploiement production (cible)
+
+on:
+  push:
+    tags:
+      - "v*.*.*" # étiquette de version sémantique poussée sur main
+
+permissions:
+  contents: write # publication de la note de version
+  packages: write # publication de l'image au registre ghcr.io
+
+concurrency:
+  group: deploiement-production
+  cancel-in-progress: false
+
+jobs:
+  deployer:
+    name: Publier et déployer une version en production
+    runs-on: ubuntu-24.04
+    # Approbation manuelle imposée par la règle de protection de l'environnement.
+    environment: production
+    env:
+      DEPLOY_PATH: ${{ vars.PRODUCTION_DEPLOY_PATH || '/srv/cesizen' }}
+      COMPOSE: -f compose.prod.yml -f compose.production.yml
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Calculer la référence et les étiquettes de l'image
+        run: |
+          echo "IMAGE_REF=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+          echo "IMAGE_SHA=sha-$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+          # github.ref_name = l'étiquette poussée (ex. v1.2.3) = la version.
+          echo "IMAGE_VERSION=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+
+      # ── 1. Construction linux/arm64 sur la forge (jamais sur le serveur) ────
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Connexion au registre ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 2. Publication au registre sous DOUBLE ÉTIQUETTE (sha + version) ────
+      - name: Construire et publier (sha-<commit> + <version>)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.prod
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE_REF }}:${{ env.IMAGE_SHA }}
+            ${{ env.IMAGE_REF }}:${{ env.IMAGE_VERSION }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ── 3. Accès SSH à l'instance (clé depuis l'environnement « production ») ─
+      - name: Configurer l'accès SSH de déploiement
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "${{ secrets.PRODUCTION_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.PRODUCTION_SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      # ── 4a. Récupération de l'image sur l'instance ─────────────────────────
+      - name: Récupérer l'image sur l'instance
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.PRODUCTION_SSH_USER }}@${{ secrets.PRODUCTION_SSH_HOST }}" \
+            "cd '$DEPLOY_PATH' && CESIZEN_IMAGE='$IMAGE_REF:$IMAGE_VERSION' docker compose $COMPOSE pull"
+
+      # ── 4b. SAUVEGARDE VÉRIFIÉE AVANT MIGRATION (condition n°4 du §3.5) ─────
+      # Les quatre conditions du §3.5 sont cumulatives : la migration ne part
+      # qu'une fois une sauvegarde fraîche produite ET vérifiée. On s'appuie sur
+      # le service de sauvegarde du L18 (docker/sauvegarde/sauvegarder.sh).
+      - name: Sauvegarde de la base, vérifiée
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.PRODUCTION_SSH_USER }}@${{ secrets.PRODUCTION_SSH_HOST }}" \
+            "cd '$DEPLOY_PATH' && docker compose $COMPOSE run --rm sauvegarde /usr/local/bin/sauvegarder.sh --verifier"
+
+      # ── 4c. Migrations — ÉTAPE EXPLICITE ET DISTINCTE ──────────────────────
+      - name: Appliquer les migrations (php artisan migrate --force)
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.PRODUCTION_SSH_USER }}@${{ secrets.PRODUCTION_SSH_HOST }}" \
+            "cd '$DEPLOY_PATH' && CESIZEN_IMAGE='$IMAGE_REF:$IMAGE_VERSION' docker compose $COMPOSE run --rm app php artisan migrate --force"
+
+      # ── 4d. Bascule des services ───────────────────────────────────────────
+      - name: Basculer les services (docker compose up -d)
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.PRODUCTION_SSH_USER }}@${{ secrets.PRODUCTION_SSH_HOST }}" \
+            "cd '$DEPLOY_PATH' && CESIZEN_IMAGE='$IMAGE_REF:$IMAGE_VERSION' docker compose $COMPOSE up -d"
+
+      # ── 4e. Nettoyage des images orphelines ────────────────────────────────
+      - name: Nettoyer les images orphelines
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.PRODUCTION_SSH_USER }}@${{ secrets.PRODUCTION_SSH_HOST }}" \
+            "docker image prune -f"
+
+      # ── 5. Contrôle de santé : /up en réessayant pendant 60 s ──────────────
+      - name: Contrôle de santé (https://<domaine>/up, 60 s)
+        run: |
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "https://${{ secrets.PRODUCTION_DOMAIN }}/up" || true)
+            if [ "$code" = "200" ]; then
+              echo "Contrôle de santé OK (tentative $i)."
+              exit 0
+            fi
+            echo "Tentative $i : code $code — nouvelle tentative dans 5 s."
+            sleep 5
+          done
+          echo "::error::Contrôle de santé en échec après 60 s."
+          ssh -i ~/.ssh/deploy_key "${{ secrets.PRODUCTION_SSH_USER }}@${{ secrets.PRODUCTION_SSH_HOST }}" \
+            "cd '$DEPLOY_PATH' && docker compose $COMPOSE logs --tail=100 app" || true
+          exit 1
+
+      # ── 6. Publication de la note de version ───────────────────────────────
+      - name: Publier la note de version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$IMAGE_VERSION" \
+            --title "$IMAGE_VERSION" \
+            --generate-notes \
+            --verify-tag
