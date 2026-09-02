@@ -1,0 +1,57 @@
+# syntax=docker/dockerfile:1
+#
+# Image de production CESIZen (L11, engagement 3.1).
+# Multi-étapes, ciblant linux/arm64, conteneur sans privilège.
+# Les ressources statiques sont compilées une fois pour toutes à la construction.
+
+# ---- Étape 1 : dépendances PHP de production + types Wayfinder -------------
+FROM composer:2 AS vendor
+WORKDIR /app
+COPY . .
+RUN composer install --no-dev --prefer-dist --optimize-autoloader --no-scripts --no-interaction \
+    && php artisan wayfinder:generate --with-form
+
+# ---- Étape 2 : compilation des ressources front (Vite) --------------------
+FROM node:22-alpine AS assets
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+# Types Wayfinder pré-générés à l'étape « vendor » : l'étape node n'a pas PHP,
+# et l'appel du plugin est neutralisé par WAYFINDER_COMMAND=true (cf. vite.config.ts).
+COPY --from=vendor /app/resources/js/actions ./resources/js/actions
+COPY --from=vendor /app/resources/js/routes ./resources/js/routes
+COPY --from=vendor /app/resources/js/wayfinder ./resources/js/wayfinder
+ENV WAYFINDER_COMMAND=true
+RUN npm run build
+
+# ---- Étape 3 : image d'exécution ------------------------------------------
+FROM php:8.4-fpm-alpine AS production
+
+# Extensions PHP via php-extension-installer (résout les bibliothèques système).
+COPY --from=mlocati/php-extension-installer:2 /usr/bin/install-php-extensions /usr/local/bin/
+RUN install-php-extensions pdo_pgsql pgsql intl opcache zip bcmath
+
+COPY docker/php/opcache.prod.ini /usr/local/etc/php/conf.d/zz-opcache.ini
+COPY docker/entrypoint.prod.sh /usr/local/bin/entrypoint
+RUN chmod +x /usr/local/bin/entrypoint \
+    && addgroup -g 1000 app \
+    && adduser -D -u 1000 -G app app
+
+WORKDIR /var/www/html
+
+# Code applicatif, puis dépendances et build issus des étapes précédentes.
+COPY --chown=app:app . .
+COPY --from=vendor --chown=app:app /app/vendor ./vendor
+COPY --from=assets --chown=app:app /app/public/build ./public/build
+RUN chown -R app:app storage bootstrap/cache
+
+# Liveness : php-fpm accepte les connexions FastCGI sur 9000 (aucun paquet ajouté).
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+    CMD ["php", "-r", "exit(@stream_socket_client('tcp://127.0.0.1:9000', $e, $s, 1) ? 0 : 1);"]
+
+USER 1000
+
+EXPOSE 9000
+ENTRYPOINT ["/usr/local/bin/entrypoint"]
+CMD ["php-fpm"]

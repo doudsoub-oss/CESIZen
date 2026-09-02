@@ -1,0 +1,43 @@
+# Contexte de construction de l'image de production (Dockerfile.prod).
+# Fichier scopé (BuildKit) : n'affecte pas le .dockerignore de développement.
+.git
+.gitignore
+.github
+.idea
+.vscode
+
+node_modules
+vendor
+
+# Cache de configuration : DOIT être exclu, sinon un packages.php périmé
+# (référençant des dépendances de dev) casse la construction.
+bootstrap/cache/*.php
+
+# Types Wayfinder : régénérés à l'étape « vendor » puis copiés.
+resources/js/actions
+resources/js/routes
+resources/js/wayfinder
+
+# Ressources compilées : reprises depuis l'étape « assets ».
+public/build
+public/hot
+public/storage
+
+tests
+docs
+
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/framework/testing/*
+
+database/database.sqlite
+
+.env
+.env.*
+!.env.example
+
+*.log
+.DS_Store
+Thumbs.db

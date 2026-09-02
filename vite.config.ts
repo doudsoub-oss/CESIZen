@@ -41,6 +41,12 @@ export default defineConfig({
         }),
         wayfinder({
             formVariants: true,
+            // Le build de production pré-génère les types Wayfinder dans une
+            // étape disposant de PHP (Dockerfile.prod), puis neutralise cet
+            // appel via WAYFINDER_COMMAND=true dans l'étape node, qui n'a pas
+            // PHP. En développement la variable est absente : la commande par
+            // défaut « php artisan wayfinder:generate » s'applique.
+            command: process.env.WAYFINDER_COMMAND,
         }),
     ],
 });
