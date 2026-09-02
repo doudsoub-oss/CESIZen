@@ -12,6 +12,12 @@ Route::inertia('/', 'Welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
 
+// Déclaration d'accessibilité RGAA (L10, engagement 2.6). État partiellement
+// conforme : l'audit complet n'a pas été conduit, la déclaration l'assume.
+Route::inertia('accessibilite', 'public/Accessibility', [
+    'etabliLe' => '1er septembre 2026',
+])->name('accessibility');
+
 // Politique de confidentialité (L08, annexe A) — page publique.
 Route::inertia('/politique-de-confidentialite', 'public/PrivacyPolicy')
     ->name('privacy-policy');
