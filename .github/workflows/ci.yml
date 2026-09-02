@@ -237,16 +237,15 @@ jobs:
         with:
           name: cesizen-image
           path: /tmp
-      # L'action télécharge elle-même le binaire trivy adapté (évite le nommage
-      # d'archive manuel). Version d'action épinglée à un tag existant.
+      # Trivy exécuté via son image officielle (Docker est garanti sur le
+      # runner). On évite ainsi l'installation du binaire — étape qui a échoué
+      # tant en manuel que via setup-trivy (récupération d'archive fragile).
       - name: Analyse de l'image (CRITICAL, corrigeables uniquement)
-        uses: aquasecurity/trivy-action@v0.33.1
-        with:
-          input: /tmp/cesizen-image.tar
-          scanners: vuln
-          severity: CRITICAL
-          ignore-unfixed: true
-          exit-code: "1"
+        run: |
+          docker run --rm -v /tmp:/tmp aquasec/trivy:0.73.0 image \
+            --input /tmp/cesizen-image.tar \
+            --severity CRITICAL --ignore-unfixed --scanners vuln \
+            --exit-code 1 --no-progress
 
   # ── Agrégat : vérification requise unique ─────────────────────────────────
   chaine-verte:
