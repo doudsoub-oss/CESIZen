@@ -81,10 +81,35 @@ import { store } from '@/routes/register';
                     <InputError :message="errors.password_confirmation" />
                 </div>
 
+                <div class="grid gap-2">
+                    <div class="flex items-start gap-2">
+                        <input
+                            id="privacy"
+                            type="checkbox"
+                            name="privacy"
+                            value="1"
+                            required
+                            :tabindex="5"
+                            class="mt-1"
+                        />
+                        <Label for="privacy" class="text-sm font-normal">
+                            J'ai lu et j'accepte la
+                            <a
+                                href="/politique-de-confidentialite"
+                                target="_blank"
+                                rel="noopener"
+                                class="underline underline-offset-4"
+                                >politique de confidentialité</a
+                            >.
+                        </Label>
+                    </div>
+                    <InputError :message="errors.privacy" />
+                </div>
+
                 <Button
                     type="submit"
                     class="mt-2 w-full"
-                    tabindex="5"
+                    tabindex="6"
                     :disabled="processing"
                     data-test="register-user-button"
                 >

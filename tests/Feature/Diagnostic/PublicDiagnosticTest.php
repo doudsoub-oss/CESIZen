@@ -101,19 +101,23 @@ class PublicDiagnosticTest extends TestCase
         $this->actingAs($user)
             ->post(route('diagnostic.submit', $q), [
                 'answers' => [$question->id => $high->id],
+                'consent' => true,
             ])
             ->assertOk();
 
-        $this->assertDatabaseHas('diagnostics', [
-            'user_id' => $user->id,
-            'questionnaire_id' => $q->id,
-            'score_total' => 5,
-        ]);
-        $this->assertDatabaseHas('diagnostic_responses', [
-            'question_id' => $question->id,
-            'answer_option_id' => $high->id,
-            'score' => 5,
-        ]);
+        // Les résultats sont chiffrés au repos (L05) : on vérifie la persistance
+        // via le modèle (déchiffré), pas par les valeurs en clair en base.
+        $diagnostic = Diagnostic::where('user_id', $user->id)->firstOrFail();
+        $this->assertSame($q->id, $diagnostic->questionnaire_id);
+        $this->assertSame(5, (int) $diagnostic->score_total);
+
+        $response = $diagnostic->responses()->firstOrFail();
+        $this->assertSame($question->id, $response->question_id);
+        $this->assertSame($high->id, (int) $response->answer_option_id);
+        $this->assertSame(5, (int) $response->score);
+
+        // Aucune valeur de score en clair dans la table.
+        $this->assertDatabaseMissing('diagnostics', ['score_total' => 5]);
     }
 
     public function test_missing_required_answer_is_rejected(): void

@@ -21,6 +21,9 @@ class SubmitDiagnosticRequest extends FormRequest
         return [
             'answers' => ['required', 'array'],
             'answers.*' => ['required', 'integer'],
+            // Consentement explicite au rattachement du résultat au compte
+            // (art. 9.2.a). Facultatif : son absence signifie « ne pas conserver ».
+            'consent' => ['sometimes', 'boolean'],
         ];
     }
 

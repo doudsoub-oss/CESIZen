@@ -65,8 +65,11 @@ class DiagnosticController extends Controller
 
         $result = $this->scoring->score($questionnaire, $answers);
 
+        // Le résultat n'est conservé que pour un usager authentifié AYANT donné
+        // son consentement explicite (art. 9.2.a). Refus côté serveur, pas
+        // seulement côté interface : sans consentement, rien n'est persisté.
         $diagnostic = null;
-        if ($request->user() !== null) {
+        if ($request->user() !== null && $request->boolean('consent')) {
             $diagnostic = DB::transaction(function () use ($questionnaire, $result, $request) {
                 $d = Diagnostic::create([
                     'user_id' => $request->user()->id,
@@ -74,6 +77,7 @@ class DiagnosticController extends Controller
                     'score_total' => $result['total'],
                     'result_interpretation_id' => $result['interpretation']?->id,
                     'completed_at' => now(),
+                    'consented_at' => now(),
                 ]);
                 $d->responses()->createMany($result['responses']);
 
