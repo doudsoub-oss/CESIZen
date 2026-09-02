@@ -17,6 +17,10 @@ Le *pourquoi* de chaque choix structurant. Voir [`adr/0000-modele.md`](adr/0000-
 
 ## Exploitation (`exploitation/`)
 
+- [procedure-de-deploiement.md](exploitation/procedure-de-deploiement.md) — déploiement en recette, 9 étapes (L24).
+- [runbook-incident.md](exploitation/runbook-incident.md) — gestion d'incident, confinement, CNIL (L24).
+- [proces-verbal-de-recette.md](exploitation/proces-verbal-de-recette.md) — modèle de PV de recette (L24).
+- [plan-de-communication.md](exploitation/plan-de-communication.md) — modèles de messages d'incident (L24).
 - [provisionnement.md](exploitation/provisionnement.md) — préparation de l'instance (L15).
 - [composition-deployee.md](exploitation/composition-deployee.md) — composition Docker de déploiement (L12).
 - [regle-expansion-contraction.md](exploitation/regle-expansion-contraction.md) — migrations et retour arrière (L16).

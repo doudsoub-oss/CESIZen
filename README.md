@@ -54,6 +54,19 @@ gitleaks detect --source . --log-opts="--all"
 Un faux positif se documente dans l'allowlist de `.gitleaks.toml` — on ne baisse
 jamais la sensibilité globale.
 
+## Déploiement en recette
+
+Le déploiement est **automatique à la fusion sur `dev`**, conditionné à la
+réussite complète de la chaîne d'intégration : construction de l'image `arm64`
+sur la forge, publication au registre sous double étiquette, connexion à
+l'instance, migrations, bascule des services et contrôle de santé `/up`. La
+procédure détaillée (neuf étapes, quatre conditions cumulatives, règle des
+créneaux, retour arrière) est dans
+[`docs/exploitation/procedure-de-deploiement.md`](docs/exploitation/procedure-de-deploiement.md).
+
+En cas d'incident, suivre [`docs/exploitation/runbook-incident.md`](docs/exploitation/runbook-incident.md)
+(séquence de confinement invariable, notification CNIL sous 72 h).
+
 ## Contribuer
 
 Modèle de branches, règles de protection et chaîne de traçabilité :
@@ -61,6 +74,19 @@ Modèle de branches, règles de protection et chaîne de traçabilité :
 [`docs/convention-de-commit.md`](docs/convention-de-commit.md).
 
 ## Documentation
+
+**Index complet de la documentation technique :** [`docs/README.md`](docs/README.md)
+(décisions d'architecture, exploitation, sécurité, qualité, veille).
+
+Exploitation courante :
+[procédure de déploiement](docs/exploitation/procedure-de-deploiement.md) ·
+[runbook incident](docs/exploitation/runbook-incident.md) ·
+[PV de recette](docs/exploitation/proces-verbal-de-recette.md) ·
+[plan de communication](docs/exploitation/plan-de-communication.md) ·
+[sauvegardes](docs/exploitation/sauvegardes.md) ·
+[supervision](docs/exploitation/supervision.md).
+
+Autres repères :
 
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — modèle de branches et de contribution (L02)
 - [`docs/convention-de-commit.md`](docs/convention-de-commit.md) — convention de commit (L02)
