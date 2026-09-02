@@ -1,0 +1,70 @@
+name: Évolution
+description: Proposer une évolution ou une nouvelle fonctionnalité.
+title: "[évolution] "
+labels: ["type:evolution"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Décrivez le besoin du point de vue de l'usager avant la solution technique.
+  - type: dropdown
+    id: module
+    attributes:
+      label: Module concerné
+      options:
+        - comptes
+        - informations
+        - diagnostics
+    validations:
+      required: true
+  - type: textarea
+    id: besoin
+    attributes:
+      label: Besoin exprimé
+    validations:
+      required: true
+  - type: textarea
+    id: benefice
+    attributes:
+      label: Bénéfice attendu pour l'usager
+    validations:
+      required: true
+  - type: textarea
+    id: acteurs
+    attributes:
+      label: Acteurs concernés
+      description: Qui utilise ou est affecté par cette évolution ?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptation
+    attributes:
+      label: Critères d'acceptation
+      description: Conditions vérifiables qui déterminent que l'évolution est terminée.
+    validations:
+      required: true
+  - type: dropdown
+    id: priorite
+    attributes:
+      label: Priorité proposée
+      options:
+        - critique
+        - forte
+        - majeure
+        - mineure
+    validations:
+      required: true
+  - type: textarea
+    id: contraintes
+    attributes:
+      label: Contraintes réglementaires ou d'accessibilité
+      description: RGPD, RGAA, ou autres contraintes à respecter. Facultatif.
+    validations:
+      required: false
+  - type: input
+    id: liees
+    attributes:
+      label: Demandes liées
+      description: Numéros de tickets liés (ex. #12, #34). Facultatif.
+    validations:
+      required: false
