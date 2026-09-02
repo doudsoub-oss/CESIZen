@@ -70,6 +70,13 @@ paths = [
 #    Les valeurs de développement Docker (identifiant `cesizen/cesizen`,
 #    dossier §6) sont couvertes par l'exception de chemin ci-dessus (fichiers
 #    `.env*.example`) : non exploitables hors du poste de développement local.
+# 3) Expansions de paramètres shell « ${VAR:?message} » / « ${VAR:-defaut} » :
+#    ce sont des LECTURES depuis l'environnement (avec message d'erreur ou valeur
+#    par défaut), jamais un secret en dur. Motif présent dans les scripts de
+#    sauvegarde et de restauration (docker/sauvegarde/*.sh, L18/L19). Un vrai
+#    secret en dur (VAR="valeur") ne contient pas cette syntaxe et reste détecté.
+regexTarget = "line"
 regexes = [
     '''Strong-pass-123''',
+    '''\$\{[A-Z_]+:[?-]''',
 ]
