@@ -109,20 +109,20 @@ jobs:
       - name: Récupérer l'image sur l'instance
         run: |
           ssh -i ~/.ssh/deploy_key "${{ secrets.RECETTE_SSH_USER }}@${{ secrets.RECETTE_SSH_HOST }}" \
-            "cd '$DEPLOY_PATH' && CESIZEN_IMAGE='$IMAGE_REF:$IMAGE_SHA' docker compose $COMPOSE pull"
+            "cd '$DEPLOY_PATH' && IMAGE_REGISTRY='$IMAGE_REF' IMAGE_TAG='$IMAGE_SHA' docker compose $COMPOSE pull"
 
       # ── 4b. Migrations — ÉTAPE EXPLICITE ET DISTINCTE (§3.4) ───────────────
       # Conteneur éphémère bâti sur l'image tout juste récupérée.
       - name: Appliquer les migrations (php artisan migrate --force)
         run: |
           ssh -i ~/.ssh/deploy_key "${{ secrets.RECETTE_SSH_USER }}@${{ secrets.RECETTE_SSH_HOST }}" \
-            "cd '$DEPLOY_PATH' && CESIZEN_IMAGE='$IMAGE_REF:$IMAGE_SHA' docker compose $COMPOSE run --rm app php artisan migrate --force"
+            "cd '$DEPLOY_PATH' && IMAGE_REGISTRY='$IMAGE_REF' IMAGE_TAG='$IMAGE_SHA' docker compose $COMPOSE run --rm app php artisan migrate --force"
 
       # ── 4c. Bascule des services ───────────────────────────────────────────
       - name: Basculer les services (docker compose up -d)
         run: |
           ssh -i ~/.ssh/deploy_key "${{ secrets.RECETTE_SSH_USER }}@${{ secrets.RECETTE_SSH_HOST }}" \
-            "cd '$DEPLOY_PATH' && CESIZEN_IMAGE='$IMAGE_REF:$IMAGE_SHA' docker compose $COMPOSE up -d"
+            "cd '$DEPLOY_PATH' && IMAGE_REGISTRY='$IMAGE_REF' IMAGE_TAG='$IMAGE_SHA' docker compose $COMPOSE up -d"
 
       # ── 4d. Nettoyage des images orphelines ────────────────────────────────
       - name: Nettoyer les images orphelines
