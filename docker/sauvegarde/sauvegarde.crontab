@@ -1,0 +1,4 @@
+# Planification des sauvegardes CESIZen (L18) — format cron busybox.
+# Quotidienne à 02h30 (heure du conteneur). La cible horaire de production
+# (§ dossier) s'obtient en ajoutant des lignes ; garder au moins la quotidienne.
+30 2 * * * /usr/local/bin/sauvegarder.sh >> /backups/journal.log 2>&1

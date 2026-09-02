@@ -142,8 +142,12 @@ services:
     networks:
       - cesizen
 
-  # ── Sauvegarde planifiée (squelette — corps au L18) ──────────────────────
+  # ── Sauvegarde planifiée et chiffrée (L18, engagement 2.8) ───────────────
   # Image postgres:16-alpine : fournit pg_dump à la MÊME version que la base.
+  # gnupg (AES-256) et rclone (externalisation) sont ajoutés au démarrage par
+  # l'entrypoint — aucune construction d'image ni compilation sur le serveur.
+  # Accès à la base par le réseau interne « cesizen » uniquement (db sans port
+  # publié). Configuration (dont BACKUP_PASSPHRASE) fournie par le .env hors dépôt.
   backup:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -151,11 +155,13 @@ services:
       - .env
     volumes:
       - cesizen-backups:/backups
+      - ./docker/sauvegarde/entrypoint.sh:/usr/local/bin/entrypoint:ro
+      - ./docker/sauvegarde/sauvegarder.sh:/usr/local/bin/sauvegarder.sh:ro
+      - ./docker/sauvegarde/sauvegarde.crontab:/usr/local/bin/sauvegarde.crontab:ro
     depends_on:
       db:
         condition: service_healthy
-    # Corps réel (dump planifié + rétention) implémenté au L18.
-    entrypoint: ["sh", "-c", "echo '[backup] squelette L12 — corps implémenté au L18'; sleep infinity"]
+    entrypoint: ["/usr/local/bin/entrypoint"]
     networks:
       - cesizen
 
