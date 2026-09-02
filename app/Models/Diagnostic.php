@@ -7,7 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property Carbon|null $completed_at
+ */
 #[Fillable(['user_id', 'questionnaire_id', 'score_total', 'result_interpretation_id', 'completed_at', 'consented_at'])]
 class Diagnostic extends Model
 {
@@ -29,16 +33,19 @@ class Diagnostic extends Model
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Questionnaire, $this> */
     public function questionnaire(): BelongsTo
     {
         return $this->belongsTo(Questionnaire::class);
     }
 
+    /** @return BelongsTo<ResultInterpretation, $this> */
     public function resultInterpretation(): BelongsTo
     {
         return $this->belongsTo(ResultInterpretation::class);
     }
 
+    /** @return HasMany<DiagnosticResponse, $this> */
     public function responses(): HasMany
     {
         return $this->hasMany(DiagnosticResponse::class);

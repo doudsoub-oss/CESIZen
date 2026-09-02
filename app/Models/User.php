@@ -14,6 +14,9 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 
+/**
+ * @property Role $role
+ */
 #[Fillable(['name', 'email', 'password', 'role', 'is_active', 'privacy_accepted_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
@@ -49,6 +52,7 @@ class User extends Authenticatable
         return $query->whereRaw('COALESCE(last_login_at, created_at) <= ?', [$date]);
     }
 
+    /** @return HasMany<Diagnostic, $this> */
     public function diagnostics(): HasMany
     {
         return $this->hasMany(Diagnostic::class);
@@ -78,7 +82,7 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return $this->role?->isAtLeast(Role::Admin) ?? false;
+        return $this->role->isAtLeast(Role::Admin);
     }
 
     public function isSuperAdmin(): bool

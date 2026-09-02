@@ -29,7 +29,7 @@ class EnsureUserHasRole
                 abort(500, "Unknown role: {$roleValue}");
             }
 
-            if ($user->role?->isAtLeast($required)) {
+            if ($user->role->isAtLeast($required)) {
                 return $next($request);
             }
         }

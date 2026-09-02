@@ -142,7 +142,7 @@ class FortifyServiceProvider extends ServiceProvider
         // Portabilité RGPD (L07) : 3 exports par jour et par compte.
         RateLimiter::for('data-export', function (Request $request) {
             return Limit::perDay(3)
-                ->by('data-export:'.($request->user()?->id ?? $request->ip()))
+                ->by('data-export:'.($request->user()->id ?? $request->ip()))
                 ->response($this->throttledResponse());
         });
     }

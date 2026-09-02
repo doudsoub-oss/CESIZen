@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use App\Models\Diagnostic;
+use App\Models\DiagnosticResponse;
 use App\Models\User;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
@@ -69,17 +71,17 @@ class DataExportController extends Controller
                 'actif' => (bool) $user->is_active,
                 'role' => $user->role->value,
             ],
-            'diagnostics' => $user->diagnostics->map(fn ($diagnostic) => [
+            'diagnostics' => $user->diagnostics->map(fn (Diagnostic $diagnostic) => [
                 'questionnaire' => $diagnostic->questionnaire?->title,
                 'score' => (int) $diagnostic->score_total,
                 'interpretation' => $diagnostic->resultInterpretation?->title,
                 'complete_le' => $diagnostic->completed_at?->toIso8601String(),
-                'reponses' => $diagnostic->responses->map(fn ($response) => [
+                'reponses' => $diagnostic->responses->map(fn (DiagnosticResponse $response) => [
                     'question' => $response->question?->text,
                     'reponse' => $response->answerOption?->label,
                     'score' => (int) $response->score,
-                ])->values(),
-            ])->values(),
+                ])->values()->all(),
+            ])->values()->all(),
         ];
     }
 }

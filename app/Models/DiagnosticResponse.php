@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $score
+ */
 #[Fillable(['diagnostic_id', 'question_id', 'answer_option_id', 'score'])]
 class DiagnosticResponse extends Model
 {
@@ -42,11 +45,13 @@ class DiagnosticResponse extends Model
         return $this->belongsTo(Diagnostic::class);
     }
 
+    /** @return BelongsTo<Question, $this> */
     public function question(): BelongsTo
     {
         return $this->belongsTo(Question::class);
     }
 
+    /** @return BelongsTo<AnswerOption, $this> */
     public function answerOption(): BelongsTo
     {
         return $this->belongsTo(AnswerOption::class);

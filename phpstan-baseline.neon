@@ -13,18 +13,6 @@ parameters:
 			path: app/Http/Controllers/Information/ContentController.php
 
 		-
-			message: '#^Cannot call method isAtLeast\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Http/Middleware/EnsureUserHasRole.php
-
-		-
-			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Http/Middleware/EnsureUserHasRole.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$category\.$#'
 			identifier: property.notFound
 			count: 1
@@ -67,64 +55,10 @@ parameters:
 			path: app/Http/Requests/Diagnostic/SubmitDiagnosticRequest.php
 
 		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:getInterpretationForScore\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Models/Diagnostic.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$score\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Models/DiagnosticResponse.php
-
-		-
 			message: '#^Method App\\Models\\Questionnaire\:\:getInterpretationForScore\(\) should return App\\Models\\ResultInterpretation\|null but returns Illuminate\\Database\\Eloquent\\Model\|null\.$#'
 			identifier: return.type
 			count: 1
 			path: app/Models/Questionnaire.php
-
-		-
-			message: '#^Cannot call method isAtLeast\(\) on string\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Models/User.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between ''admin''\|''super_admin''\|''user'' and App\\Enums\\Role will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
-			count: 1
-			path: app/Models/User.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between ''admin''\|''super_admin''\|''user'' and App\\Enums\\Role\:\:SuperAdmin will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
-			count: 1
-			path: app/Models/User.php
-
-		-
-			message: '#^Using nullsafe method call on non\-nullable type string\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Models/User.php
-
-		-
-			message: '#^Strict comparison using \!\=\= between ''admin''\|''super_admin''\|''user'' and App\\Enums\\Role\:\:SuperAdmin will always evaluate to true\.$#'
-			identifier: notIdentical.alwaysTrue
-			count: 1
-			path: app/Policies/UserPolicy.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between ''admin''\|''super_admin''\|''user'' and App\\Enums\\Role\:\:SuperAdmin will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
-			count: 1
-			path: app/Policies/UserPolicy.php
-
-		-
-			message: '#^Strict comparison using \=\=\= between ''admin''\|''super_admin''\|''user'' and App\\Enums\\Role\:\:User will always evaluate to false\.$#'
-			identifier: identical.alwaysFalse
-			count: 2
-			path: app/Policies/UserPolicy.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$questionnaire_id\.$#'
