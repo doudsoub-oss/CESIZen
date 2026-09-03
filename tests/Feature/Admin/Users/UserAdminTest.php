@@ -30,8 +30,7 @@ class UserAdminTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.users.index'))
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('users.total', 3));
-            // ->assertInertia(fn ($page) => $page->where('users.total', 2));
+            ->assertInertia(fn ($page) => $page->where('users.total', 2));
     }
 
     public function test_super_admin_index_shows_everyone(): void
